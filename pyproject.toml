@@ -1,0 +1,14 @@
+[project]
+name = "price_checker"
+version = "0.1.0"
+description = "API para controle de precos"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "sqlalchemy",
+  "uvicorn[standard]",
+  "pydantic-settings",
+  "python-jose[cryptography]",
+  "passlib[bcrypt]",
+  "psycopg2>=2.9.11",
+]

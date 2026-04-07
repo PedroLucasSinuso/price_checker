@@ -1,0 +1,7 @@
+.env
+.json
+.uv-cache
+.venv
+.vscode
+__pycache__
+scripts

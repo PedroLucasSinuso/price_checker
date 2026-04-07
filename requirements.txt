@@ -1,0 +1,7 @@
+﻿fastapi
+sqlalchemy
+uvicorn[standard]
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+psycopg2
