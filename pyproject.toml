@@ -11,4 +11,5 @@ dependencies = [
   "python-jose[cryptography]",
   "passlib[bcrypt]",
   "psycopg2>=2.9.11",
+  "pandas>=3.0.2",
 ]

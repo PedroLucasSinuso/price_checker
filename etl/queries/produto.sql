@@ -3,7 +3,7 @@
 
 SELECT  c.iddetalhe         as id_detalhe,
         d.stdetalheativo    as ativo,
-        d.cdprincipal       as codigo_principal,
+        d.cdprincipal       as codigo_chamada,
         g.nmgrupo           as grupo,
         f.dsfamilia         as familia,
         d.dsdetalhe         as sku,

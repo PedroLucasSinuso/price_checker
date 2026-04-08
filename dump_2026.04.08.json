@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-04-08T18:56:54",
+  "root": "price_checker",
+  "description": "Dump do source code Python (.py) e SQL (.sql) com paths relativos.",
+  "context": {
+    "notes": [
+      "Arquivos que nao sao .py ou .sql foram excluidos.",
+      "Caminhos sao relativos a raiz do projeto.",
+      "O campo module existe apenas para arquivos .py."
+    ]
+  },
+  "summary": {
+    "file_count": 16
+  },
+  "layout": {
+    "top_level": {
+      "dirs": [
+        "api",
+        "core",
+        "db",
+        "etl",
+        "models",
+        "repositories",
+        "schemas",
+        "scripts",
+        "utils"
+      ],
+      "files": [
+        "main.py"
+      ]
+    }
+  },
+  "file_index": [
+    "api/deps.py",
+    "api/routes/produto.py",
+    "core/config.py",
+    "db/boostrap.py",
+    "db/database.py",
+    "db/session.py",
+    "etl/dump.py",
+    "etl/loader.py",
+    "etl/queries/produto.sql",
+    "etl/query_loader.py",
+    "main.py",
+    "models/produto.py",
+    "repositories/produto.py",
+    "schemas/schemas.py",
+    "scripts/dump_project.py",
+    "utils/codigo.py"
+  ],
+  "files": [
+    {
+      "path": "api/deps.py",
+      "content": "#Dependency",
+      "module": "api.deps"
+    },
+    {
+      "path": "api/routes/produto.py",
+      "content": "#todo: create produto router",
+      "module": "api.routes.produto"
+    },
+    {
+      "path": "core/config.py",
+      "content": "from enum import Enum\nfrom pydantic_settings import BaseSettings\n\nclass DatabaseType(str, Enum):\n    POSTGRES = \"postgres\"\n    SQLITE = \"sqlite\"\n\nclass Settings(BaseSettings):\n    postgres_url: str = \"\"\n    sqlite_url: str = \"\"\n    default_db: DatabaseType = DatabaseType.SQLITE\n    cache_refresh_interval: int = 3600  # in seconds\n\n    model_config = {\n        \"env_file\": \".env\"\n    }\n\nsettings = Settings()",
+      "module": "core.config"
+    },
+    {
+      "path": "db/boostrap.py",
+      "content": "from ..db.database import Base\nfrom ..db.session import sqlite_engine\n\ndef init_db():\n    Base.metadata.create_all(bind=sqlite_engine)",
+      "module": "db.boostrap"
+    },
+    {
+      "path": "db/database.py",
+      "content": "#Just to avoid circular imports\nfrom sqlalchemy.orm import declarative_base\n\nBase = declarative_base()",
+      "module": "db.database"
+    },
+    {
+      "path": "db/session.py",
+      "content": "from sqlalchemy import create_engine\nfrom sqlalchemy.orm import sessionmaker\nfrom ..core.config import settings\n\n#Postgres\npostgres_engine = create_engine(settings.postgres_url)\nPostgresSession = sessionmaker(autocommit=False, autoflush=False, bind=postgres_engine)\n\n#SQLite\nsqlite_engine = create_engine(\n    settings.sqlite_url,future=True,\n    connect_args={\"check_same_thread\": False}\n)\nSqliteSession = sessionmaker(autocommit=False, autoflush=False, bind=sqlite_engine)",
+      "module": "db.session"
+    },
+    {
+      "path": "etl/dump.py",
+      "content": "from .query_loader import QueryLoader\nfrom .loader import PostgresLoader\nfrom ..repositories.produto import ProdutoRepository\n\n\ndef row_to_dict(row: dict) -> dict:\n    return {\n        \"id\": row[\"id_detalhe\"],\n        \"codigo_chamada\": row[\"codigo_chamada\"],\n        \"nome\": row[\"sku\"],\n        \"grupo\": row[\"grupo\"],\n        \"familia\": row[\"familia\"],\n        \"preco_venda\": row[\"preco_venda\"],\n        \"preco_custo\": row[\"preco_custo\"],\n        \"estoque\": row[\"estoque\"],\n        \"codigo\": row[\"codigo\"],\n    }\n\n\ndef dump_postgres_to_sqlite():\n    query = QueryLoader.load(\"produto\")\n\n    loader = PostgresLoader(query)\n    rows = loader.load()\n\n    produtos = [row_to_dict(row) for row in rows]\n\n    repo = ProdutoRepository()\n\n    repo.deletar_todos()\n    repo.salvar_lote(produtos)\n",
+      "module": "etl.dump"
+    },
+    {
+      "path": "etl/loader.py",
+      "content": "from sqlalchemy import text\n\nfrom ..db.session import PostgresSession\n\nclass PostgresLoader:\n    def __init__(self, query: str):\n        self.query = query\n\n    def load(self) -> list[dict]:\n        with PostgresSession() as session:\n            result = session.execute(text(self.query))\n            columns = result.keys()\n            return [dict(zip(columns, row)) for row in result.fetchall()]",
+      "module": "etl.loader"
+    },
+    {
+      "path": "etl/queries/produto.sql",
+      "content": "﻿-- Estração de códigos e produtos do servidor principal \n-- e armazenamento em um banco de dados local SQLite\n\nSELECT  c.iddetalhe         as id_detalhe,\n        d.stdetalheativo    as ativo,\n        d.cdprincipal       as codigo_chamada,\n        g.nmgrupo           as grupo,\n        f.dsfamilia         as familia,\n        d.dsdetalhe         as sku,\n        d.vlprecovenda      as preco_venda,\n        d.vlprecocusto      as preco_custo,\n        c.dscodigo          as codigo,\n        e.qtestoque         as estoque\nFROM wshop.codigos c\nLEFT JOIN wshop.detalhe d   ON c.iddetalhe = d.iddetalhe\nLEFT JOIN wshop.familia f   ON d.idfamilia = f.idfamilia\nLEFT JOIN wshop.produto p   ON d.idproduto = p.idproduto\nLEFT JOIN wshop.grupo   g   ON p.idgrupo = g.idgrupo\nLEFT JOIN wshop.estoque e   ON d.iddetalhe = e.iddetalhe\nWHERE e.dtreferencia = (\n    SELECT MAX(e2.dtreferencia)\n    FROM wshop.estoque e2\n    WHERE e2.iddetalhe = e.iddetalhe\n);\n"
+    },
+    {
+      "path": "etl/query_loader.py",
+      "content": "from pathlib import Path\n\nclass QueryLoader():\n    BASE_DIR = Path(__file__).resolve().parent / \"queries\"\n\n    @classmethod\n    def load(cls, name: str) -> str:\n        path = cls.BASE_DIR / f\"{name}.sql\"\n        if not path.is_file():\n            raise FileNotFoundError(f\"Query {name} não encontrada em {path}\")\n        return path.read_text(encoding=\"utf-8\")",
+      "module": "etl.query_loader"
+    },
+    {
+      "path": "main.py",
+      "content": "﻿from db.boostrap import init_db\nfrom .etl.dump import dump_postgres_to_sqlite\n\n\n\ndef main():\n    dump_postgres_to_sqlite()\n\nif __name__ == \"__main__\":\n    init_db()\n    main()",
+      "module": "main"
+    },
+    {
+      "path": "models/produto.py",
+      "content": "from ..db.database import Base\nfrom sqlalchemy import Column, Integer, String, Float\n\nclass Produto(Base):\n    __tablename__ = \"produtos\"\n\n    id = Column(Integer, primary_key=True, index=True)\n    codigo_chamada = Column(String, index=True)\n    nome = Column(String, index=True)\n    grupo = Column(String, index=True)\n    familia = Column(String, index=True)\n    preco_venda = Column(Float)\n    preco_custo = Column(Float)\n    estoque = Column(Integer)\n    codigo = Column(String, index=True)\n",
+      "module": "models.produto"
+    },
+    {
+      "path": "repositories/produto.py",
+      "content": "#Produto repository: classe responsável por acessar os dados dos produtos no banco de dados cache\n#Repository com sessão interna porque não sei fazer com sessão externa\nfrom contextlib import contextmanager\nfrom typing import List, Dict, Optional\nfrom sqlalchemy import insert, select\nfrom db.session import SqliteSession\nfrom models.produto import Produto\nfrom utils.codigo import Codigo\n\n\nclass ProdutoRepository:\n    def __init__(self) -> None:\n        pass\n\n    @contextmanager\n    def _session_scope(self):\n        # Encapsula e gerencia a sessão do banco de dados\n        session = SqliteSession()\n        try:\n            yield session\n            session.commit()\n        except:\n            session.rollback()\n            raise\n        finally:\n            session.close()\n\n    def deletar_todos(self) -> None:\n        with self._session_scope() as session:\n            session.query(Produto).delete()\n\n    def salvar_lote(self, produtos: List[Dict]):\n        with self._session_scope() as session:\n            session.execute(insert(Produto), produtos)\n\n    def listar(self) -> List[Produto]:\n        with self._session_scope() as session:\n            return session.query(Produto).all()\n        \n    def obter_por_codigo(self, codigo: str) -> Optional[Produto]:\n        codigo_valor = Codigo(codigo).valor\n        with self._session_scope() as session:\n            stmt = select(Produto).where(Produto.codigo == codigo_valor)\n            return session.execute(stmt).scalars().first()\n",
+      "module": "repositories.produto"
+    },
+    {
+      "path": "schemas/schemas.py",
+      "content": "from pydantic import BaseModel, field_validator\nfrom utils.codigo import Codigo\n\nclass Produto(BaseModel):\n    id: int\n    codigo_chamada: str\n    grupo: str\n    familia: str\n    nome: str\n    preco_venda: float\n    preco_custo: float\n    estoque: int\n    codigo: str\n\n    @field_validator(\"codigo\")\n    @classmethod\n    def validar_codigo(cls, v: str) -> str:\n        return Codigo(v).valor\n",
+      "module": "schemas.schemas"
+    },
+    {
+      "path": "scripts/dump_project.py",
+      "content": "import json\nfrom datetime import datetime\nfrom pathlib import Path\nfrom typing import Dict, List\n\nIGNORE_DIRS = {\".git\", \".venv\", \"venv\", \"__pycache__\", \"output\", \".md\", \"__init__.py\", \"planilhas\", \".uv-cache\",\".vscode\"}\n\n\ndef is_ignored(path: Path) -> bool:\n    return any(part in IGNORE_DIRS for part in path.parts)\n\n\ndef read_text(path: Path) -> str:\n    return path.read_text(encoding=\"utf-8\", errors=\"ignore\")\n\n\ndef to_module_name(rel_path: str) -> str:\n    module = rel_path.replace(\"/\", \".\").removesuffix(\".py\")\n    if module.endswith(\".__init__\"):\n        module = module[: -len(\".__init__\")]\n    return module\n\n\ndef collect_source_files(root: Path) -> List[Dict[str, str]]:\n    files: List[Dict[str, str]] = []\n    for p in sorted(root.rglob(\"*\")):\n        if p.is_file() and not is_ignored(p):\n            if p.suffix not in {\".py\", \".sql\"}:\n                continue\n            rel = p.relative_to(root).as_posix()\n            entry: Dict[str, str] = {\n                \"path\": rel,\n                \"content\": read_text(p),\n            }\n            if p.suffix == \".py\":\n                entry[\"module\"] = to_module_name(rel)\n            files.append(entry)\n    return files\n\n\ndef build_index(files: List[Dict[str, str]]) -> List[str]:\n    return [f[\"path\"] for f in files]\n\n\ndef build_top_level(files: List[Dict[str, str]]) -> Dict[str, List[str]]:\n    dirs = set()\n    root_files = set()\n    for f in files:\n        path = f[\"path\"]\n        if \"/\" in path:\n            dirs.add(path.split(\"/\", 1)[0])\n        else:\n            root_files.add(path)\n    return {\n        \"dirs\": sorted(dirs),\n        \"files\": sorted(root_files),\n    }\n\n\ndef build_dump(root: Path) -> Dict[str, object]:\n    files = collect_source_files(root)\n    return {\n        \"schema_version\": \"1.2\",\n        \"generated_at\": datetime.now().isoformat(timespec=\"seconds\"),\n        \"root\": root.name,\n        \"description\": \"Dump do source code Python (.py) e SQL (.sql) com paths relativos.\",\n        \"context\": {\n            \"notes\": [\n                \"Arquivos que nao sao .py ou .sql foram excluidos.\",\n                \"Caminhos sao relativos a raiz do projeto.\",\n                \"O campo module existe apenas para arquivos .py.\",\n            ]\n        },\n        \"summary\": {\n            \"file_count\": len(files),\n        },\n        \"layout\": {\n            \"top_level\": build_top_level(files),\n        },\n        \"file_index\": build_index(files),\n        \"files\": files,\n    }\n\n\ndef main() -> None:\n    today = datetime.now().strftime(\"%Y.%m.%d\")\n    base = Path(__file__).parents[1]\n    dump = build_dump(base)\n    out_file = base / f\"dump_{today}.json\"\n    out_file.write_text(\n        json.dumps(dump, ensure_ascii=False, indent=2),\n        encoding=\"utf-8\",\n    )\n    size_kb = out_file.stat().st_size // 1024\n    print(f\"Arquivo criado: {out_file} ({size_kb} KB)\")\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "module": "scripts.dump_project"
+    },
+    {
+      "path": "utils/codigo.py",
+      "content": "import re\nfrom typing import Optional\n\n\nclass Codigo:\n    def __init__(self, valor: str) -> None:\n        if not isinstance(valor, str):\n            raise TypeError(\"Codigo deve ser uma string\")\n        normalizado = self.normalizar(valor)\n        if not self.validar(normalizado):\n            raise ValueError(f\"Codigo invalido: {valor!r}\")\n        self._valor = normalizado\n        self._tipo = self.detectar_tipo(normalizado)\n\n    @property\n    def valor(self) -> str:\n        return self._valor\n\n    @property\n    def tipo(self) -> Optional[str]:\n        return self._tipo\n\n    @staticmethod\n    def normalizar(codigo: str) -> str:\n        codigo = codigo.strip()\n        return re.sub(r\"[\\s-]\", \"\", codigo)\n\n    @classmethod\n    def validar(cls, codigo: str) -> bool:\n        return cls.detectar_tipo(codigo) is not None\n\n    @classmethod\n    def detectar_tipo(cls, codigo: str) -> Optional[str]:\n        if cls.is_ean13(codigo):\n            return \"EAN13\"\n        if cls.is_ean12(codigo):\n            return \"EAN12\"\n        if cls.is_ean8(codigo):\n            return \"EAN8\"\n        if cls.is_plu6(codigo):\n            return \"PLU6\"\n        return None\n\n    @classmethod\n    def is_ean13(cls, codigo: str) -> bool:\n        return cls._validar_ean(codigo, 13)\n\n    @classmethod\n    def is_ean12(cls, codigo: str) -> bool:\n        return cls._validar_ean(codigo, 12)\n\n    @classmethod\n    def is_ean8(cls, codigo: str) -> bool:\n        return cls._validar_ean(codigo, 8)\n\n    @staticmethod\n    def is_plu6(codigo: str) -> bool:\n        return codigo.isdigit() and len(codigo) == 6\n\n    @staticmethod\n    def _validar_ean(codigo: str, tamanho: int) -> bool:\n        if len(codigo) != tamanho or not codigo.isdigit():\n            return False\n        corpo = codigo[:-1]\n        digito = int(codigo[-1])\n        soma = 0\n        peso = 3\n        for ch in reversed(corpo):\n            soma += int(ch) * peso\n            peso = 1 if peso == 3 else 3\n        calculado = (10 - (soma % 10)) % 10\n        return calculado == digito\n",
+      "module": "utils.codigo"
+    }
+  ]
+}
