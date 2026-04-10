@@ -8,6 +8,7 @@ class PostgresLoader:
 
     def load(self) -> list[dict]:
         with PostgresSession() as session:
-            result = session.execute(text(self.query))
+            query = self.query.lstrip("\ufeff").strip()
+            result = session.execute(text(query))
             columns = result.keys()
             return [dict(zip(columns, row)) for row in result.fetchall()]

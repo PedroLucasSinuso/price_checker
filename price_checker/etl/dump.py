@@ -1,34 +1,54 @@
 ﻿from price_checker.etl.query_loader import QueryLoader
 from price_checker.etl.loader import PostgresLoader
-from price_checker.repositories.produto_repository import ProdutoRepository
-from price_checker.models.produto import Produto
+from price_checker.db.session import SqliteSession
+from price_checker.models.produto import Produto, ProdutoCodigo
 
-def row_to_dict(row: dict) -> dict:
-    return {
-        "id": row["id_detalhe"],
-        "codigo_chamada": row["codigo_chamada"],
-        "nome": row["nome"],
-        "grupo": row["grupo"],
-        "familia": row["familia"],
-        "preco_venda": row["preco_venda"],
-        "preco_custo": row["preco_custo"],
-        "estoque": row["estoque"],
-        "codigo": row["codigo"],
-    }
+
+def map_produto(row: dict) -> Produto:
+    return Produto(
+        codigo_chamada=row["codigo_chamada"],
+        nome=row["nome"],
+        grupo=row["grupo"],
+        familia=row["familia"],
+        preco_venda=row["preco_venda"],
+        preco_custo=row["preco_custo"],
+        estoque=row["estoque"],
+    )
+
+
+def map_codigo(row: dict) -> ProdutoCodigo:
+    return ProdutoCodigo(
+        codigo=row["codigo"],
+        codigo_chamada=row["codigo_chamada"],
+    )
 
 
 def dump_postgres_to_sqlite():
-    query = QueryLoader.load("produto")
+    produto_query = QueryLoader.load("produto")
+    codigo_query = QueryLoader.load("codigo")
 
-    loader = PostgresLoader(query)
-    rows = loader.load()
+    produto_loader = PostgresLoader(produto_query)
+    codigo_loader = PostgresLoader(codigo_query)
 
-    # Resolve a incompatibilidade entre os nomes das colunas do Postgres e os atributos do modelo Produto
-    # Dívida técnica a ser resolvida posteriormente: ETL acoplado ao modelo de dados
-    #todo: refatorar para desacoplar o ETL do modelo de dados
-    produtos = [Produto(**row_to_dict(row)) for row in rows] 
+    produtos_rows = produto_loader.load()
+    codigos_rows = codigo_loader.load()
 
+    produtos = [map_produto(row) for row in produtos_rows]
 
-    repo = ProdutoRepository()
-    repo.replace_all(produtos)
+    codigos_validos = []
+    produtos_ids = {p.codigo_chamada for p in produtos}
 
+    for row in codigos_rows:
+        if row["codigo_chamada"] in produtos_ids:
+            codigos_validos.append(map_codigo(row))
+
+    with SqliteSession() as session:
+        session.query(ProdutoCodigo).delete()
+        session.query(Produto).delete()
+
+        session.add_all(produtos)
+        session.flush()
+
+        session.add_all(codigos_validos)
+
+        session.commit()

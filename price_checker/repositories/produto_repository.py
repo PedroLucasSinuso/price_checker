@@ -32,7 +32,6 @@ class ProdutoRepository:
 
             data = [
                 {
-                    "id": p.id,
                     "codigo_chamada": p.codigo_chamada,
                     "nome": p.nome,
                     "grupo": p.grupo,
@@ -40,7 +39,6 @@ class ProdutoRepository:
                     "preco_venda": p.preco_venda,
                     "preco_custo": p.preco_custo,
                     "estoque": p.estoque,
-                    "codigo": p.codigo,
                 }
                 for p in produtos
             ]
