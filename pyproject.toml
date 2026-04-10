@@ -12,4 +12,5 @@ dependencies = [
   "passlib[bcrypt]",
   "psycopg2>=2.9.11",
   "pandas>=3.0.2",
+  "pytest>=9.0.3",
 ]

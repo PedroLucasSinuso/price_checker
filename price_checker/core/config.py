@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     postgres_url: str = ""
     sqlite_url: str = ""
     default_db: DatabaseType = DatabaseType.SQLITE
-    cache_refresh_interval: int = 3600  # in seconds
+    cache_refresh_interval: int = 3600  # em segundos
 
     model_config = {
         "env_file": ".env"

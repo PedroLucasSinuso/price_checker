@@ -1,6 +1,6 @@
-from sqlalchemy import text
+﻿from sqlalchemy import text
 
-from ..db.session import PostgresSession
+from price_checker.db.session import PostgresSession
 
 class PostgresLoader:
     def __init__(self, query: str):

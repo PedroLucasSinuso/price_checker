@@ -1,4 +1,4 @@
-﻿-- Estração de códigos e produtos do servidor principal 
+﻿-- Extração de códigos e produtos do servidor principal 
 -- e armazenamento em um banco de dados local SQLite
 
 SELECT  c.iddetalhe         as id_detalhe,
@@ -6,7 +6,7 @@ SELECT  c.iddetalhe         as id_detalhe,
         d.cdprincipal       as codigo_chamada,
         g.nmgrupo           as grupo,
         f.dsfamilia         as familia,
-        d.dsdetalhe         as sku,
+        d.dsdetalhe         as nome,
         d.vlprecovenda      as preco_venda,
         d.vlprecocusto      as preco_custo,
         c.dscodigo          as codigo,
