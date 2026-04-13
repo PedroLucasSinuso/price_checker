@@ -16,7 +16,7 @@ class Produto(Base):
     preco_custo: Mapped[float] = mapped_column(Float)
     estoque: Mapped[float] = mapped_column(Float)
 
-    codigos = relationship("ProdutoCodigo", backref="produto", cascade="all, delete")
+    codigos = relationship("ProdutoCodigo", back_populates="produto", cascade="all, delete-orphan", lazy="selectin")
 
     @property
     def markup(self) -> float:
@@ -34,9 +34,12 @@ class ProdutoCodigo(Base):
     __tablename__ = "produto_codigos"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    codigo: Mapped[str] = mapped_column(String)
+    codigo: Mapped[str] = mapped_column(String, index=True, unique=True)
     codigo_chamada: Mapped[str] = mapped_column(
         String,
-        ForeignKey("produtos.codigo_chamada"),
+        ForeignKey("produtos.codigo_chamada", ondelete="CASCADE"),
+        nullable=False,
         index=True
     )
+
+    produto = relationship("Produto", back_populates="codigos")

@@ -1,1 +1,14 @@
-#Dependency
+from fastapi import Depends
+from price_checker.db.session import SqliteSession
+from price_checker.repositories.produto_repository import ProdutoRepository
+
+
+def get_db():
+    session = SqliteSession()
+    try:
+        yield session
+    finally:
+        session.close()
+
+def get_produto_repository(db=Depends(get_db)):
+    return ProdutoRepository(db)
