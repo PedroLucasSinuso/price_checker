@@ -34,7 +34,7 @@ class ProdutoCodigo(Base):
     __tablename__ = "produto_codigos"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    codigo: Mapped[str] = mapped_column(String, index=True, unique=True)
+    codigo: Mapped[str] = mapped_column(String, index=True)
     codigo_chamada: Mapped[str] = mapped_column(
         String,
         ForeignKey("produtos.codigo_chamada", ondelete="CASCADE"),

@@ -17,6 +17,14 @@ def dump_postgres_to_sqlite():
 
     # LOAD
     with SqliteSession() as session:
-        carregar_produtos(session, produtos)
-        atualizar_cache(session)
-        session.commit()
+        try:
+            with session.begin():
+                carregar_produtos(session, produtos)
+                atualizar_cache(session)
+
+        except Exception as e:
+            with session.begin():
+                atualizar_cache(session, status="erro", erro=str(e))
+                
+            raise RuntimeError(f"Erro ao carregar dados no SQLite: {e}")
+            

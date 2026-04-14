@@ -29,7 +29,7 @@ def criar_produto2():
         nome="Tablet ABC",
         codigos=[
             ProdutoCodigo(codigo="9876543219876"),
-            ProdutoCodigo(codigo_chamada="000124"),
+            ProdutoCodigo(codigo="000124"),
         ]
     )
 
