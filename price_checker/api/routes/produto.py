@@ -7,10 +7,9 @@ router = APIRouter(prefix="/produtos", tags=["Produtos"])
 
 
 @router.get("/", response_model=list[ProdutoResponse])
-def listar_produtos(repo=Depends(get_produto_repository)):
+def listar_produtos(limit: int = 50, offset: int = 0, repo=Depends(get_produto_repository)):
     service = ProdutoService(repo)
-    produtos = service.listar_paginado()
-    return [ProdutoResponse.model_validate(p) for p in produtos]
+    return [ProdutoResponse.model_validate(p) for p in service.listar_paginado(limit=limit, offset=offset)]
 
 
 @router.get("/{codigo}", response_model=ProdutoResponse)

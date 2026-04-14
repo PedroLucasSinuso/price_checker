@@ -1,11 +1,21 @@
 ﻿from pytest import approx
-from unittest.mock import Mock
 from price_checker.models.produto import Produto
 from price_checker.schemas.produto_schema import ProdutoResponse
-from price_checker.services.produto_service import ProdutoService
 
-def test_produto_response():
-    produto = Produto(
+class FakeProduto:
+    def __init__(self):
+        self.codigo_chamada = "000123"
+        self.grupo = "Eletrônicos"
+        self.familia = "Smartphones"
+        self.nome = "Produto X"
+        self.preco_venda = 10.0
+        self.preco_custo = 5.0
+        self.estoque = 20
+        self.markup = 1.0
+        self.margem = 0.5
+
+def criar_produto():
+    return Produto(
         codigo_chamada="000123",
         nome="Teste",
         grupo="Grupo",
@@ -14,31 +24,37 @@ def test_produto_response():
         preco_venda=15,
         estoque=10
     )
+
+#Teste de serialização direta a partir de um objeto ORM
+def test_produto_response():
+    produto = criar_produto()
 
     response = ProdutoResponse.model_validate(produto)
 
     assert response.codigo_chamada == "000123"
     assert response.nome == "Teste"
+    assert response.grupo == "Grupo"
+    assert response.familia == "Familia"
+    assert response.preco_custo == 10
+    assert response.preco_venda == 15
+    assert response.estoque == 10
     assert response.markup == approx(0.5, abs=0.01)
     assert response.margem == approx(0.33, abs=0.01)
+    assert response.codigo_buscado is None
 
-def test_obter_com_metricas():
-    produto_mock = Produto(
-        codigo_chamada="000123",
-        nome="Teste",
-        grupo="Grupo",
-        familia="Familia",
-        preco_custo=10,
-        preco_venda=15,
-        estoque=10
-    )
+# Teste de serialização direta a partir de um objeto não ORM
+def test_model_validade_from_atributes():
+    fake_produto = FakeProduto()
 
-    repo_mock = Mock()
-    repo_mock.obter_por_codigo.return_value = produto_mock
+    response = ProdutoResponse.model_validate(fake_produto)
 
-    service = ProdutoService(repo_mock)
-
-    result = service.obter_com_metricas("000123")
-
-    assert result is not None
-    assert result.codigo_chamada == "000123"
+    assert response.codigo_chamada == "000123"
+    assert response.nome == "Produto X"
+    assert response.grupo == "Eletrônicos"
+    assert response.familia == "Smartphones"
+    assert response.preco_custo == 5.0
+    assert response.preco_venda == 10.0
+    assert response.estoque == 20
+    assert response.markup == approx(1.0, abs=0.01)
+    assert response.margem == approx(0.5, abs=0.01)
+    assert response.codigo_buscado is None

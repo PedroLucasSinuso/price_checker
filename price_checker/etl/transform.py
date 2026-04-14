@@ -1,7 +1,7 @@
 from collections import defaultdict
 from price_checker.models.produto import Produto, ProdutoCodigo
 
-def transformar_produtos(produtos_rows, codigos_rows):
+def transformar_produtos(produtos_rows, codigos_rows) -> list[Produto]:
     codigos_por_produto = defaultdict(set)
 
     for row in codigos_rows:
