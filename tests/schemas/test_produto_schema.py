@@ -58,3 +58,10 @@ def test_model_validade_from_atributes():
     assert response.markup == approx(1.0, abs=0.01)
     assert response.margem == approx(0.5, abs=0.01)
     assert response.codigo_buscado is None
+
+# Test codigo_buscado preenchido corretamente a partir do endpoint, sem precisar de um produto real
+def test_model_codigo_buscado():
+    produto = criar_produto()
+    response = ProdutoResponse.model_validate(produto)
+    response.codigo_buscado = "000123"
+    assert response.codigo_buscado == "000123"

@@ -27,7 +27,7 @@ def transformar_produtos(produtos_rows, codigos_rows) -> list[Produto]:
             preco_custo=row["preco_custo"],
             preco_venda=row["preco_venda"],
             estoque=row["estoque"],
-            codigos=[ProdutoCodigo(codigo=c) for c in codigos],
+            codigos=[ProdutoCodigo(codigo=c,codigo_chamada=codigo_chamada) for c in codigos],
         )
 
         produtos.append(produto)

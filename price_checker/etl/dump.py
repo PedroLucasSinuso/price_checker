@@ -23,8 +23,9 @@ def dump_postgres_to_sqlite():
                 atualizar_cache(session)
 
         except Exception as e:
-            with session.begin():
-                atualizar_cache(session, status="erro", erro=str(e))
+            session.rollback()
+            atualizar_cache(session, status="erro", erro=str(e))
+            session.commit()
                 
             raise RuntimeError(f"Erro ao carregar dados no SQLite: {e}")
             

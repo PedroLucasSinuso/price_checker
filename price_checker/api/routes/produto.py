@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from price_checker.api.deps import get_produto_repository
 from price_checker.services.produto_service import ProdutoService
 from price_checker.schemas.produto_schema import ProdutoResponse
+from price_checker.utils.codigo import Codigo
 
 router = APIRouter(prefix="/produtos", tags=["Produtos"])
 
@@ -17,11 +18,16 @@ def obter_produto(codigo: str, repo=Depends(get_produto_repository)):
     service = ProdutoService(repo)
 
     try:
-        produto = service.obter_com_metricas(codigo)
+        codigo_valido = Codigo(codigo)
     except ValueError:
         raise HTTPException(status_code=400, detail="Código inválido")
 
+    produto = service.obter_por_codigo(codigo_valido.valor)
+
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    response = ProdutoResponse.model_validate(produto)
+    response.codigo_buscado = codigo_valido.valor
 
-    return produto
+    return response
