@@ -1,0 +1,14 @@
+
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from price_checker.db.database import Base
+
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    nome: Mapped[str] = mapped_column(String)
+    role: Mapped[str] = mapped_column(String)
+    hashed_password: Mapped[str] = mapped_column(String)
+    

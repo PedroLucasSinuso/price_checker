@@ -1,9 +1,13 @@
 ﻿from typing import List, Optional
 from sqlalchemy import select
+from price_checker.repositories.interfaces import IProdutoRepository
 from price_checker.models.produto import Produto, ProdutoCodigo
 
-#Produto repository: classe responsável por acessar os dados dos produtos no banco de dados cache (SQLite)
-class ProdutoRepository:
+class ProdutoRepository(IProdutoRepository):
+    """
+    Implementação concreta do repositório de produtos usando SQLAlchemy. 
+    Esta classe é responsável por interagir com o banco de dados para realizar operações relacionadas a produtos.
+    """
     def __init__(self, session) -> None:
         self._session = session
 

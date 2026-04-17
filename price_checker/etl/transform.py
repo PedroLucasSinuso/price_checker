@@ -1,35 +1,66 @@
 from collections import defaultdict
-from price_checker.models.produto import Produto, ProdutoCodigo
+from typing import Iterable, Dict, Set, List
 
-def transformar_produtos(produtos_rows, codigos_rows) -> list[Produto]:
-    codigos_por_produto = defaultdict(set)
+from price_checker.etl.dto import (
+    ProdutoDTO,
+    ProdutoCodigoDTO,
+    ProdutoRow,
+    CodigoRow,
+)
+
+
+def transformar_produtos(
+    produtos_rows: Iterable[ProdutoRow],
+    codigos_rows: Iterable[CodigoRow],
+) -> List[ProdutoDTO]:
+    codigos_por_produto = _agrupar_codigos_por_produto(codigos_rows)
+
+    return [
+        _criar_produto_dto(produto_row, codigos_por_produto)
+        for produto_row in produtos_rows
+    ]
+
+
+def _agrupar_codigos_por_produto(
+    codigos_rows: Iterable[CodigoRow],
+) -> Dict[str, Set[str]]:
+    agrupados: Dict[str, Set[str]] = defaultdict(set)
 
     for row in codigos_rows:
-        codigo = row["codigo"]
-        codigo_chamada = row["codigo_chamada"]
-
-        if not codigo:
+        if not row.codigo:
             continue
 
-        codigos_por_produto[codigo_chamada].add(codigo)
+        agrupados[row.codigo_chamada].add(row.codigo)
 
-    produtos = []
+    return agrupados
 
-    for row in produtos_rows:
-        codigo_chamada = row["codigo_chamada"]
-        codigos = codigos_por_produto.get(codigo_chamada, set())
 
-        produto = Produto(
+def _criar_produto_dto(
+    row: ProdutoRow,
+    codigos_por_produto: Dict[str, Set[str]],
+) -> ProdutoDTO:
+    codigos = codigos_por_produto.get(row.codigo_chamada, set())
+
+    return ProdutoDTO(
+        codigo_chamada=row.codigo_chamada,
+        nome=row.nome,
+        grupo=row.grupo,
+        familia=row.familia,
+        preco_custo=row.preco_custo,
+        preco_venda=row.preco_venda,
+        estoque=row.estoque,
+        codigos=_criar_codigos_dto(row.codigo_chamada, codigos),
+    )
+
+
+def _criar_codigos_dto(
+    codigo_chamada: str,
+    codigos: Iterable[str],
+) -> List[ProdutoCodigoDTO]:
+    return [
+        ProdutoCodigoDTO(
+            codigo=codigo,
             codigo_chamada=codigo_chamada,
-            nome=row["nome"],
-            grupo=row["grupo"],
-            familia=row["familia"],
-            preco_custo=row["preco_custo"],
-            preco_venda=row["preco_venda"],
-            estoque=row["estoque"],
-            codigos=[ProdutoCodigo(codigo=c,codigo_chamada=codigo_chamada) for c in codigos],
         )
-
-        produtos.append(produto)
-
-    return produtos
+        for codigo in codigos
+    ]

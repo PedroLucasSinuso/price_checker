@@ -11,8 +11,8 @@ def dump_postgres_to_sqlite():
 
     # TRANSFORM
     produtos = transformar_produtos(
-        data["produtos"],
-        data["codigos"]
+        data.produtos,
+        data.codigos
     )
 
     # LOAD
