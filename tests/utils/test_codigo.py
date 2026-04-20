@@ -1,4 +1,4 @@
-from price_checker.utils.codigo import Codigo
+from price_checker.domain.value_objects.codigo import Codigo
 import pytest
 
 # EANs válidos para testes

@@ -1,6 +1,6 @@
-﻿import pytest
+import pytest
 from pytest import approx
-from price_checker.models.produto import Produto, ProdutoCodigo
+from price_checker.domain.models.produto import Produto, ProdutoCodigo
 
 def criar_produto1():
     return Produto(

@@ -1,6 +1,6 @@
 from fastapi import Depends
-from price_checker.db.session import SqliteSession
-from price_checker.repositories.produto_repository import ProdutoRepository
+from price_checker.infrastructure.db.session import SqliteSession
+from price_checker.infrastructure.repositories.produto_repository import ProdutoRepository
 
 
 def get_db():

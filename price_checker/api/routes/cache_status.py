@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from price_checker.api.deps import get_db
-from price_checker.models.cache_status import CacheStatus
+from price_checker.domain.models.cache_status import CacheStatus
 
 router = APIRouter(prefix="/status", tags=["Status"])
 

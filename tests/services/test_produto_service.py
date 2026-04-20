@@ -1,7 +1,7 @@
-﻿import pytest
+import pytest
 from unittest.mock import Mock
-from price_checker.models.produto import Produto
-from price_checker.services.produto_service import ProdutoService
+from price_checker.domain.models.produto import Produto
+from price_checker.application.services.produto_service import ProdutoService
 
 # Fixtures
 @pytest.fixture

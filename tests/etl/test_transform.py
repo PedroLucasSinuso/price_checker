@@ -1,23 +1,24 @@
-from price_checker.etl.transform import transformar_produtos
+from price_checker.application.etl.dto import ProdutoRow, CodigoRow
+from price_checker.application.etl.transform import transformar_produtos
 
-# Teste de integridade para a função transformar_produtos
+
 def test_transformar_produtos():
     produtos_rows = [
-        {
-            "codigo_chamada": "000123",
-            "nome": "Teste",
-            "grupo": "Grupo",
-            "familia": "Familia",
-            "preco_custo": 10,
-            "preco_venda": 15,
-            "estoque": 10
-        }
+        ProdutoRow(
+            codigo_chamada="000123",
+            nome="Teste",
+            grupo="Grupo",
+            familia="Familia",
+            preco_custo=10,
+            preco_venda=15,
+           estoque=10
+        )
     ]
 
     codigos_rows = [
-        {"codigo_chamada": "000123", "codigo": "ABC123"},
-        {"codigo_chamada": "000123", "codigo": "DEF456"},
-        {"codigo_chamada": "000123", "codigo": None},
+        CodigoRow(codigo_chamada="000123", codigo="ABC123"),
+        CodigoRow(codigo_chamada="000123", codigo="DEF456"),
+        CodigoRow(codigo_chamada="000123", codigo=None),
     ]
 
     produtos = transformar_produtos(produtos_rows, codigos_rows)
