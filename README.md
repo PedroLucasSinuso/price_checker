@@ -54,39 +54,45 @@ O projeto segue arquitetura em camadas com separação clara de responsabilidade
 ```
 price_checker/
 ├── api/
-│   ├── deps.py               # Injeção de dependência (sessão, repositório)
+│   ├── deps.py                 # Injeção de dependência (sessão, repositório)
 │   └── routes/
-│       ├── produto.py        # Endpoints de produto
+│       ├── produto.py          # Endpoints de produto
 │       └── cache_status.py   # Endpoint de status do cache
+├── application/
+│   ├── services/
+│   │   └── produto_service.py  # Regras de negócio
+│   └── etl/
+│       ├── extract/
+│       │   └── extractor.py   # ProdutoExtractor — lê do Postgres
+│       ├── transform/
+│       │   └── transformer.py # Mapeamento de linhas para DTOs
+│       ├── load/
+│       │   └── loader.py     # Persistência no SQLite + atualização de cache
+│       ├── pipeline.py       # Orquestrador ETL (Extract → Transform → Load)
+│       ├── dto.py           # Data Transfer Objects
+│       └── queries/
+│           ├── produto.sql
+│           └── codigo.sql
 ├── core/
-│   └── config.py             # Settings via pydantic-settings
-├── db/
-│   ├── database.py           # Base declarativa SQLAlchemy
-│   ├── session.py            # Engines e sessions (Postgres + SQLite)
-│   └── bootstrap.py         # Criação das tabelas (init_db)
-├── etl/
-│   ├── extract.py            # ProdutoExtractor — lê do Postgres
-│   ├── transform.py          # Mapeamento de linhas para models ORM
-│   ├── load.py               # Persistência no SQLite + atualização de cache
-│   ├── dump.py               # Orquestrador ETL (Extract → Transform → Load)
-│   ├── run_etl.py            # Entry point do ETL
-│   ├── postgres_loader.py    # Executa queries SQL no Postgres
-│   ├── query_loader.py       # Carrega arquivos .sql do disco
-│   ├── interfaces.py         # Interface abstrata DataSource
-│   └── queries/
-│       ├── produto.sql
-│       └── codigo.sql
-├── models/
-│   ├── produto.py            # Produto, ProdutoCodigo (SQLAlchemy ORM)
-│   └── cache_status.py       # CacheStatus (registro de última atualização)
-├── repositories/
-│   └── produto_repository.py # Acesso ao SQLite
-├── schemas/
-│   └── produto_schema.py     # ProdutoResponse (Pydantic)
-├── services/
-│   └── produto_service.py    # Regras de negócio, validação de código
-└── utils/
-    └── codigo.py             # Classe Codigo: validação EAN8/12/13 e PLU6
+│   ├── config.py             # Settings via pydantic-settings
+│   └── logging_config.py     # Configuração de logging
+├── domain/
+│   ├── models/
+│   │   ├── produto.py        # Produto, ProdutoCodigo (SQLAlchemy ORM)
+│   │   └── cache_status.py  # CacheStatus (registro de última atualização)
+│   └── value_objects/
+│       └── codigo.py       # Classe Codigo: validação EAN8/12/13 e PLU6
+├── infrastructure/
+│   ├── db/
+│   │   ├── database.py      # Base declarativa SQLAlchemy
+│   │   ├── session.py     # Engines e sessions (Postgres + SQLite)
+│   │   └── bootstrap.py   # Criação das tabelas (init_db)
+│   ├── repositories/
+│   │   └── produto_repository.py  # Acesso ao SQLite
+│   └── postgres/
+│       └── loader.py      # Executa queries SQL no Postgres
+└── schemas/
+    └── produto_schema.py  # ProdutoResponse (Pydantic)
 ```
 
 **Fluxo de uma requisição:**
@@ -94,7 +100,7 @@ price_checker/
 ```
 Request HTTP
     └─► Route (produto.py)
-            └─► ProdutoService
+            ���─► ProdutoService
                     └─► Codigo (valida e normaliza o código)
                     └─► ProdutoRepository
                             └─► SQLite (cache)
@@ -148,7 +154,7 @@ Request HTTP
 
 ## Validação de códigos
 
-A classe `Codigo` em `utils/codigo.py` valida e normaliza automaticamente os formatos suportados:
+A classe `Codigo` em `domain/value_objects/codigo.py` valida e normaliza automaticamente os formatos suportados:
 
 | Formato | Tamanho | Validação |
 |---|---|---|
@@ -172,7 +178,7 @@ python -m price_checker.etl.run_etl
 **Fases:**
 
 1. **Extract** — `ProdutoExtractor` executa as queries `produto.sql` e `codigo.sql` no Postgres
-2. **Transform** — agrupa códigos de barras por produto, constrói objetos ORM
+2. **Transform** — agrupa códigos de barras por produto, converte para DTOs
 3. **Load** — trunca e reinsere produtos e códigos no SQLite, registra timestamp em `CacheStatus`
 
 > O ETL requer `POSTGRES_URL` configurado no `.env`. Sem ele, o `PostgresLoader` levanta `RuntimeError` com mensagem clara.
@@ -201,9 +207,9 @@ CACHE_REFRESH_INTERVAL=3600
 
 ```bash
 # Instalar dependências
-pip install fastapi sqlalchemy pydantic-settings uvicorn
+pip install -r requirements.txt
 
-# Inicializar o banco SQLite e rodar o ETL
+# Rodar ETL (para популяция inicial do cache)
 python -m price_checker.etl.run_etl
 
 # Subir a API
@@ -244,11 +250,13 @@ tests/
 
 **Separação Model / Schema** — `Produto` (SQLAlchemy) representa a entidade persistida; `ProdutoResponse` (Pydantic) define o contrato da API. Métricas computadas (`markup`, `margem`) ficam como `@property` no model e são expostas pelo schema via `from_attributes`.
 
+**Arquitetura em camadas** — o projeto segue a estrutura domain/application/infrastructure, isolando regras de negócio (domain, application) de detalhes técnicos (infrastructure).
+
 **Injeção de dependência** — a sessão do banco é gerenciada pelo `Depends` do FastAPI (`deps.py`), mantendo o repositório desacoplado do ciclo de vida da request.
 
-**Interface `DataSource`** — `PostgresLoader` implementa `DataSource` (ABC), facilitando a substituição por outras fontes de dados ou mocks em testes futuros.
+**Transform puro** — a camada de transformação ETL recebe apenas DTOs (não dicts), garantindo tipagem consistente e testes mais confiáveis.
 
-**Classe `Codigo`** — encapsula validação, normalização e detecção de tipo de código de barras como objeto de valor imutável, isolando essa lógica do service e permitindo testes independentes.
+**Classe `Codigo`** — encapsula validação, normalização e detecção de tipo de código de barras como Value Object imutável, isolando essa lógica do service.
 
 ---
 
