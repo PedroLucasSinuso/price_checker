@@ -54,45 +54,30 @@ O projeto segue arquitetura em camadas com separação clara de responsabilidade
 ```
 price_checker/
 ├── api/
-│   ├── deps.py                 # Injeção de dependência (sessão, repositório)
+│   ├── deps.py            # Injeção de dependência
 │   └── routes/
-│       ├── produto.py          # Endpoints de produto
-│       └── cache_status.py   # Endpoint de status do cache
+│       ├── produto.py      # Endpoints de produto
+│       └── cache_status.py
 ├── application/
-│   ├── services/
-│   │   └── produto_service.py  # Regras de negócio
+│   ├── services/         # Regras de negócio
 │   └── etl/
-│       ├── extract/
-│       │   └── extractor.py   # ProdutoExtractor — lê do Postgres
-│       ├── transform/
-│       │   └── transformer.py # Mapeamento de linhas para DTOs
-│       ├── load/
-│       │   └── loader.py     # Persistência no SQLite + atualização de cache
-│       ├── pipeline.py       # Orquestrador ETL (Extract → Transform → Load)
-│       ├── dto.py           # Data Transfer Objects
-│       └── queries/
-│           ├── produto.sql
-│           └── codigo.sql
+│       ├── extract/      # Extração do Postgres
+│       ├── transform/    # Transformação para DTOs
+│       ├── load/        # Persistência no SQLite
+│       ├── pipeline.py   # Orquestrador ETL
+│       ├── dto.py       # DTOs
+│       └── queries/     # Queries SQL
 ├── core/
-│   ├── config.py             # Settings via pydantic-settings
-│   └── logging_config.py     # Configuração de logging
+│   ├── config.py       # Settings
+│   └── logging_config.py
 ├── domain/
-│   ├── models/
-│   │   ├── produto.py        # Produto, ProdutoCodigo (SQLAlchemy ORM)
-│   │   └── cache_status.py  # CacheStatus (registro de última atualização)
+│   ├── models/        # Entidades ORM
 │   └── value_objects/
-│       └── codigo.py       # Classe Codigo: validação EAN8/12/13 e PLU6
-├── infrastructure/
-│   ├── db/
-│   │   ├── database.py      # Base declarativa SQLAlchemy
-│   │   ├── session.py     # Engines e sessions (Postgres + SQLite)
-│   │   └── bootstrap.py   # Criação das tabelas (init_db)
+└── infrastructure/
+│   ├── db/          # SQLAlchemy setup
 │   ├── repositories/
-│   │   └── produto_repository.py  # Acesso ao SQLite
-│   └── postgres/
-│       └── loader.py      # Executa queries SQL no Postgres
-└── schemas/
-    └── produto_schema.py  # ProdutoResponse (Pydantic)
+│   └── postgres/   # Executor de queries
+└── schemas/         # Schemas Pydantic
 ```
 
 **Fluxo de uma requisição:**
@@ -100,7 +85,7 @@ price_checker/
 ```
 Request HTTP
     └─► Route (produto.py)
-            ���─► ProdutoService
+            └─► ProdutoService
                     └─► Codigo (valida e normaliza o código)
                     └─► ProdutoRepository
                             └─► SQLite (cache)
@@ -172,6 +157,7 @@ Espaços e hífens são removidos automaticamente na normalização. O campo `co
 O pipeline ETL sincroniza dados do PostgreSQL para o SQLite local. Por padrão é executado manualmente; a configuração `cache_refresh_interval` (em segundos) está disponível para agendamento externo.
 
 ```bash
+# Rodar ETL (para popular o cache)
 python -m price_checker.etl.run_etl
 ```
 
@@ -191,15 +177,13 @@ Crie um arquivo `.env` na raiz do projeto:
 
 ```env
 POSTGRES_URL=postgresql://usuario:senha@host:5432/banco
-SQLITE_URL=sqlite:///./price_checker.db
-CACHE_REFRESH_INTERVAL=3600
+SQLITE_URL=sqlite:///./data/price_checker.db
 ```
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `POSTGRES_URL` | Sim (para ETL) | Connection string do banco de origem |
 | `SQLITE_URL` | Sim | Caminho do banco SQLite local |
-| `CACHE_REFRESH_INTERVAL` | Não | Intervalo de refresh em segundos (padrão: 3600) |
 
 ---
 
@@ -209,7 +193,7 @@ CACHE_REFRESH_INTERVAL=3600
 # Instalar dependências
 pip install -r requirements.txt
 
-# Rodar ETL (para популяция inicial do cache)
+# Inicializar banco e rodar ETL
 python -m price_checker.etl.run_etl
 
 # Subir a API
