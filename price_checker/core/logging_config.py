@@ -1,7 +1,10 @@
+from pathlib import Path
 import logging
 from logging.config import dictConfig
+from logging.handlers import TimedRotatingFileHandler
 
 def setup_logging():
+    Path("logs").mkdir(exist_ok=True)
     dictConfig({
         "version": 1,
         "disable_existing_loggers": False,
@@ -21,26 +24,44 @@ def setup_logging():
                 "formatter": "default",
             },
             "file_app": {
-                "class": "logging.FileHandler",
+                "class": "logging.handlers.TimedRotatingFileHandler",
                 "filename": "logs/app.log",
                 "formatter": "default",
+                "when": "midnight",
+                "interval": 1,
+                "backupCount": 7,
+                "encoding": "utf-8",
             },
             "file_etl": {
-                "class": "logging.FileHandler",
+                "class": "logging.handlers.TimedRotatingFileHandler",
                 "filename": "logs/etl.log",
                 "formatter": "etl",
+                "when": "midnight",
+                "interval": 1,
+                "backupCount": 7,
+                "encoding": "utf-8",
+            },
+            "file_error": {
+                "class": "logging.handlers.TimedRotatingFileHandler",
+                "filename": "logs/error.log",
+                "formatter": "default",
+                "when": "midnight",
+                "interval": 1,
+                "backupCount": 30,
+                "level": "ERROR",
+                "encoding": "utf-8",
             },
         },
 
         "loggers": {
             "price_checker": {
                 "level": "INFO",
-                "handlers": ["console", "file_app"],
+                "handlers": ["console", "file_app", "file_error"],
                 "propagate": False,
             },
-            "price_checker.etl": {
+            "price_checker.application.etl": {
                 "level": "INFO",
-                "handlers": ["console", "file_etl"],
+                "handlers": ["console", "file_etl", "file_error"],
                 "propagate": False,
             },
         },

@@ -1,5 +1,5 @@
 ﻿from pytest import approx
-from price_checker.models.produto import Produto
+from price_checker.domain.models.produto import Produto
 from price_checker.schemas.produto_schema import ProdutoResponse
 
 class FakeProduto:

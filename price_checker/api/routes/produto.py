@@ -31,7 +31,7 @@ def obter_produto(codigo: str, repo=Depends(get_produto_repository)):
     produto = service.obter_por_codigo(codigo_valido.valor)
 
     if not produto:
-        logger.warning("Produto não encontrado na API | codigo=%s", codigo)
+        logger.error("Produto não encontrado na API | codigo=%s", codigo)
         
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     

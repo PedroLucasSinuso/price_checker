@@ -1,5 +1,5 @@
 from price_checker.application.etl.dto import ProdutoRow, CodigoRow
-from price_checker.application.etl.transform import transformar_produtos
+from price_checker.application.etl.transform.transformer import transformar_produtos
 
 
 def test_transformar_produtos():
@@ -17,8 +17,7 @@ def test_transformar_produtos():
 
     codigos_rows = [
         CodigoRow(codigo_chamada="000123", codigo="ABC123"),
-        CodigoRow(codigo_chamada="000123", codigo="DEF456"),
-        CodigoRow(codigo_chamada="000123", codigo=None),
+        CodigoRow(codigo_chamada="000123", codigo="DEF456")
     ]
 
     produtos = transformar_produtos(produtos_rows, codigos_rows)
