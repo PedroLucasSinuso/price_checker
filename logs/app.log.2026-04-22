@@ -1,0 +1,3 @@
+2026-04-22 18:01:26,564 [INFO] [price_checker.api.routes.produto] Busca de produto | codigo=999999
+2026-04-22 18:01:26,575 [ERROR] [price_checker.application.services.produto_service] Produto não encontrado | codigo=999999
+2026-04-22 18:01:26,576 [ERROR] [price_checker.api.routes.produto] Produto não encontrado na API | codigo=999999

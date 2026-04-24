@@ -7,3 +7,4 @@ python-jose[cryptography]
 bcrypt<4.2
 psycopg2
 pytest
+python-multipart

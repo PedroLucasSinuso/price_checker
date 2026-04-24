@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from price_checker.api.deps import get_db, require_admin
 from price_checker.infrastructure.repositories.usuario_repository import UsuarioRepository
 from price_checker.application.services.auth_service import AuthService
-from price_checker.schemas.auth_schema import LoginRequest, TokenResponse
+from price_checker.schemas.auth_schema import TokenResponse
 from price_checker.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
 from price_checker.domain.models.usuario import Usuario
 
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/token", response_model=TokenResponse)
-def login(dados: LoginRequest, db=Depends(get_db)):
+def login(dados: OAuth2PasswordRequestForm = Depends(), db=Depends(get_db)):
     service = AuthService(UsuarioRepository(db))
     try:
         token = service.autenticar(dados.username, dados.password)

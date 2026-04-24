@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from sqlalchemy import delete
+from sqlalchemy import delete, func
+from sqlalchemy.orm import Session
 
 from price_checker.application.etl.dto import ProdutoDTO
 from price_checker.domain.models.produto import Produto, ProdutoCodigo
@@ -25,7 +26,7 @@ def _to_orm(produto_dto: ProdutoDTO):
     )
 
 
-def carregar_produtos(session, produtos_dto):
+def carregar_produtos(session: Session, produtos_dto: list[ProdutoDTO]) -> tuple[int, int]:
     session.execute(delete(ProdutoCodigo))
     session.execute(delete(Produto))
 
@@ -33,8 +34,13 @@ def carregar_produtos(session, produtos_dto):
 
     session.add_all(produtos_orm)
 
+    produtos_count = len(produtos_orm)
+    codigos_count = sum(len(p.codigos) for p in produtos_orm)
 
-def atualizar_cache(session, status="sucesso", erro=None):
+    return produtos_count, codigos_count
+
+
+def atualizar_cache(session: Session, status: str = "sucesso", erro: str | None = None):
     session.add(CacheStatus(
         last_updated=datetime.now(timezone.utc),
         status=status,

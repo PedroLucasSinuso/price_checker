@@ -106,6 +106,9 @@ Request HTTP
 | `GET` | `/produtos/{codigo}` | Busca produto por EAN ou PLU (dados públicos) | Autenticado |
 | `GET` | `/produtos/{codigo}/completo` | Busca produto com custo, markup e margem | Supervisor/Admin |
 | `GET` | `/status/` | Retorna data/hora da última atualização do cache | Público |
+| `POST` | `/admin/sync` | Dispara sync em background | Admin |
+| `GET` | `/admin/sync/{job_id}` | Verifica status de um job | Admin |
+| `GET` | `/admin/sync/` | Lista histórico de jobs | Admin |
 
 ### Parâmetros de listagem
 
@@ -293,9 +296,11 @@ tests/
 - [ ] Testes de integração da API com `TestClient` e banco SQLite em memória
 - [ ] Endpoint de busca por nome (`GET /produtos/busca?q=`)
 - [ ] Filtros por grupo e família em `GET /produtos/`
-- [ ] Endpoint para disparo manual do ETL via HTTP (`POST /etl/trigger`)
 - [ ] Frontend mobile (PWA) com leitura de código de barras pela câmera
-- [ ] Agendamento automático do ETL
+- [ ] Agendamento automático do ETL (cron)
+- [ ] Endpoint para cancelar job em andamento
+- [ ] Notificação (WebSocket) ao completar sync
+- [ ] Logging detalhado por fase ETL
 
 ---
 

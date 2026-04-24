@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from price_checker.infrastructure.db.session import SqliteSession
 from price_checker.application.etl.extract.extractor import ProdutoExtractor
 from price_checker.application.etl.transform.transformer import transformar_produtos
@@ -7,10 +8,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def run_etl():
+@dataclass
+class EtlResult:
+    produtos_count: int
+    codigos_count: int
+
+
+def run_etl() -> EtlResult:
     logger.info("Iniciando ETL")
 
-    extractor =ProdutoExtractor()
+    extractor = ProdutoExtractor()
 
     data = extractor.extract()
 
@@ -26,10 +33,12 @@ def run_etl():
     with SqliteSession() as session:
         try:
             with session.begin():
-                carregar_produtos(session, produtos)
+                produtos_count, codigos_count = carregar_produtos(session, produtos)
                 atualizar_cache(session)
 
-            logger.info("Load concluído com sucesso")
+            logger.info("Load concluído com sucesso | produtos=%s codigos=%s", produtos_count, codigos_count)
+
+            return EtlResult(produtos_count=produtos_count, codigos_count=codigos_count)
 
         except Exception as e:
             logger.exception("Erro no ETL | Erro: %s", e)
