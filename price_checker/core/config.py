@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     default_db: DatabaseType = DatabaseType.SQLITE
     cache_refresh_interval: int = 3600  # em segundos
 
+    jwt_secret: str = "troque-em-producao"
+    access_token_expire_minutes: int = 60
+
     model_config = {
         "env_file": ".env"
     }

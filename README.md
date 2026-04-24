@@ -44,6 +44,7 @@ PostgreSQL (fonte)
 | Validação | Pydantic v2 |
 | Configuração | pydantic-settings + `.env` |
 | Testes | pytest |
+| Autenticação | JWT (python-jose) + bcrypt |
 
 ---
 
@@ -97,11 +98,14 @@ Request HTTP
 
 ## Endpoints
 
-| Método | Rota | Descrição |
-|---|---|---|
-| `GET` | `/produtos/` | Lista produtos com paginação |
-| `GET` | `/produtos/{codigo}` | Busca produto por EAN ou PLU |
-| `GET` | `/status/` | Retorna data/hora da última atualização do cache |
+| Método | Rota | Descrição | Acesso |
+|---|---|---|---|
+| `POST` | `/auth/token` | Login e geração de token JWT | Público |
+| `POST` | `/auth/register` | Criar novo usuário | Admin |
+| `GET` | `/produtos/` | Lista produtos com paginação | Autenticado |
+| `GET` | `/produtos/{codigo}` | Busca produto por EAN ou PLU (dados públicos) | Autenticado |
+| `GET` | `/produtos/{codigo}/completo` | Busca produto com custo, markup e margem | Supervisor/Admin |
+| `GET` | `/status/` | Retorna data/hora da última atualização do cache | Público |
 
 ### Parâmetros de listagem
 
@@ -171,6 +175,29 @@ python -m price_checker.etl.run_etl
 
 ---
 
+## Autenticação
+
+A API utiliza **JWT (JSON Web Token)** para controle de acesso. O fluxo é:
+
+1. **Login** — `POST /auth/token` com `username` e `password` retorna o `access_token`
+2. **Uso** — informe o token no header `Authorization: Bearer <token>`
+
+### Roles
+
+| Role | Descrição |
+|---|---|
+| `operador` | Consulta básica (sem custo, markup, margem) |
+| `supervisor` | Consulta completa de qualquer produto |
+| `admin` | Administrador — pode criar outros usuários |
+
+### Criando o primeiro admin
+
+```bash
+python scripts/create_admin.py admin "Administrador" sua_senha
+```
+
+---
+
 ## Configuração
 
 Crie um arquivo `.env` na raiz do projeto:
@@ -178,12 +205,16 @@ Crie um arquivo `.env` na raiz do projeto:
 ```env
 POSTGRES_URL=postgresql://usuario:senha@host:5432/banco
 SQLITE_URL=sqlite:///./data/price_checker.db
+JWT_SECRET=sua-chave-secreta-grande-e-aleatoria
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 ```
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `POSTGRES_URL` | Sim (para ETL) | Connection string do banco de origem |
 | `SQLITE_URL` | Sim | Caminho do banco SQLite local |
+| `JWT_SECRET` | Sim | Chave secreta para assinar tokens JWT (gere uma string longa e aleatória) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Não | Tempo de expiração do token (padrão: 60 minutos) |
 
 ---
 
@@ -210,8 +241,21 @@ A documentação interativa estará disponível em `http://localhost:8000/docs`.
 pytest
 ```
 
-A suíte cobre: validação de códigos (EAN/PLU), métricas do model (markup, margem, edge cases), serialização do schema Pydantic, regras de negócio do service (mock de repositório, clamp de paginação, código inválido) e transformação ETL.
-
+A suíte cobre: validação de códigos (EAN/PLU), métricas do model (markup, margem, edge cases), serialização do schema Pydantic, regras de negócio do service (mock de repositório, clamp de paginação, código inválido) e transformação ETL, além de segurança (hash de senhas) e autenticação JWT.
+```
+tests/
+├── etl/
+│   └── test_transform.py
+├── models/
+│   └── test_produto_model.py
+├── schemas/
+│   └── test_produto_schema.py
+├── services/
+│   ├── test_produto_service.py
+│   └── test_auth_service.py
+└── utils/
+    ├── test_codigo.py
+    └── test_security.py
 ```
 tests/
 ├── etl/

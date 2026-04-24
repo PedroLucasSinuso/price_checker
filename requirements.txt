@@ -3,5 +3,7 @@ sqlalchemy
 uvicorn[standard]
 pydantic-settings
 passlib[bcrypt]
+python-jose[cryptography]
+bcrypt<4.2
 psycopg2
 pytest

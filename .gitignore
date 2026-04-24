@@ -4,6 +4,7 @@
 .venv
 .vscode
 .pytest_cache
+*.log
 pytest_cache
 pytest.ini
 __pycache__

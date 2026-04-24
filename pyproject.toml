@@ -9,6 +9,8 @@ dependencies = [
   "uvicorn[standard]",
   "pydantic-settings",
   "passlib[bcrypt]",
+  "python-jose[cryptography]",
+  "bcrypt<4.2",
   "psycopg2>=2.9.11",
   "pytest>=9.0.3",
 ]
