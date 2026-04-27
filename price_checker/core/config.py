@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     sqlite_url: str = ""
     default_db: DatabaseType = DatabaseType.SQLITE
     cache_refresh_interval: int = 3600  # em segundos
+    
+    allowed_origins: list[str] = []
 
     jwt_secret: str = ""
     access_token_expire_minutes: int = 60 # em minutos
@@ -25,6 +27,15 @@ class Settings(BaseSettings):
         if len(self.jwt_secret) < 32:
             raise ValueError(
                 "JWT_SECRET muito curto. Use no mínimo 32 caracteres."
+            )
+        return self
+    
+    @model_validator(mode="after")
+    def validar_allowed_origins(self):
+        if not self.allowed_origins:
+            raise ValueError(
+                "ALLOWED_ORIGINS não configurado."
+                "Defina a variável no arquivo .env antes de subir a aplicação."
             )
         return self
     
