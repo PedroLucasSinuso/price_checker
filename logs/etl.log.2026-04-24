@@ -1,0 +1,10 @@
+2026-04-24 17:35:50,440 [ETL] [INFO] Iniciando ETL
+2026-04-24 17:35:50,445 [ETL] [INFO] Extraindo dados do Postgres
+2026-04-24 17:35:52,034 [ETL] [INFO] Extract concluído | produtos=11937 codigos=24011
+2026-04-24 17:35:52,117 [ETL] [INFO] Transform concluído | total=11937
+2026-04-24 17:35:56,915 [ETL] [INFO] Load concluído com sucesso | produtos=11937 codigos=23867
+2026-04-24 17:35:56,929 [ETL] [INFO] Iniciando ETL
+2026-04-24 17:35:56,932 [ETL] [INFO] Extraindo dados do Postgres
+2026-04-24 17:35:57,488 [ETL] [INFO] Extract concluído | produtos=11937 codigos=24011
+2026-04-24 17:35:57,566 [ETL] [INFO] Transform concluído | total=11937
+2026-04-24 17:36:02,539 [ETL] [INFO] Load concluído com sucesso | produtos=11937 codigos=23867

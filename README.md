@@ -245,8 +245,16 @@ pytest
 ```
 
 A suíte cobre: validação de códigos (EAN/PLU), métricas do model (markup, margem, edge cases), serialização do schema Pydantic, regras de negócio do service (mock de repositório, clamp de paginação, código inválido) e transformação ETL, além de segurança (hash de senhas) e autenticação JWT.
+
+### Testes de Integração API
+
+Testes de integração cobrem todos os endpoints da API usando `FastAPI TestClient` com SQLite em memória:
+
 ```
 tests/
+├── api/
+│   ├── conftest.py          # Fixtures (client, usuários, tokens)
+│   └── test_api.py          # 23 casos de teste
 ├── etl/
 │   └── test_transform.py
 ├── models/
@@ -260,18 +268,19 @@ tests/
     ├── test_codigo.py
     └── test_security.py
 ```
-tests/
-├── etl/
-│   └── test_transform.py
-├── models/
-│   └── test_produto_model.py
-├── schemas/
-│   └── test_produto_schema.py
-├── services/
-│   └── test_produto_service.py
-└── utils/
-    └── test_codigo.py
-```
+
+#### Cobertura dos testes de integração
+
+| Categoria | Casos |
+|---|---|
+| Autenticação (token) | Validação, credenciais inválidas, usuário inexistente, campos vazios |
+| Registro de usuário | Admin cria usuário, sem autenticação, role inválida |
+| Listagem de produtos | Autenticado, sem autenticação, paginação |
+| Busca de produto | Por código válido, inexistente, código inválido |
+| Detalhes completos | Supervisor/Admin acessa, Operador bloqueado, sem autenticação |
+| Status do cache | Acesso público |
+| Admin Sync | Trigger, permissões (supervisor/operador/anônimo), histórico, status de job |
+| CORS | Headers em requisições OPTIONS |
 
 ---
 

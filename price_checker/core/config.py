@@ -1,4 +1,5 @@
 from enum import Enum
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 class DatabaseType(str, Enum):
@@ -11,9 +12,22 @@ class Settings(BaseSettings):
     default_db: DatabaseType = DatabaseType.SQLITE
     cache_refresh_interval: int = 3600  # em segundos
 
-    jwt_secret: str = "troque-em-producao"
-    access_token_expire_minutes: int = 60
+    jwt_secret: str = ""
+    access_token_expire_minutes: int = 60 # em minutos
 
+    @model_validator(mode="after")
+    def validar_jwt_secret(self):
+        if not self.jwt_secret:
+            raise ValueError(
+                "JWT_SECRET não configurado. "
+                "Defina a variável no arquivo .env antes de subir a aplicação."
+            )
+        if len(self.jwt_secret) < 32:
+            raise ValueError(
+                "JWT_SECRET muito curto. Use no mínimo 32 caracteres."
+            )
+        return self
+    
     model_config = {
         "env_file": ".env"
     }

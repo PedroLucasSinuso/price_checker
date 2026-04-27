@@ -3,7 +3,6 @@ from price_checker.api.routes import produto, cache_status
 from price_checker.api.routes import auth
 from price_checker.api.routes import admin
 from price_checker.core.logging_config import setup_logging
-import price_checker.domain.models.usuario
 
 setup_logging()
 
