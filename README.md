@@ -58,6 +58,8 @@ price_checker/
 │   ├── deps.py            # Injeção de dependência
 │   └── routes/
 │       ├── produto.py      # Endpoints de produto
+│       ├── auth.py         # Endpoints de autenticação
+│       ├── admin.py        # Endpoints administrativos
 │       └── cache_status.py
 ├── application/
 │   ├── services/         # Regras de negócio
@@ -254,11 +256,13 @@ Testes de integração cobrem todos os endpoints da API usando `FastAPI TestClie
 tests/
 ├── api/
 │   ├── conftest.py          # Fixtures (client, usuários, tokens)
-│   └── test_api.py          # 23 casos de teste
+│   └── test_api.py          # 26 casos de teste
 ├── etl/
 │   └── test_transform.py
 ├── models/
 │   └── test_produto_model.py
+├── repositories/
+│   └── test_produto_repository.py
 ├── schemas/
 │   └── test_produto_schema.py
 ├── services/
@@ -281,6 +285,7 @@ tests/
 | Status do cache | Acesso público |
 | Admin Sync | Trigger, permissões (supervisor/operador/anônimo), histórico, status de job |
 | CORS | Headers em requisições OPTIONS |
+| Repositories | Testes de repositórios com SQLite em memória |
 
 ---
 
@@ -302,14 +307,14 @@ tests/
 
 ## Melhorias planejadas
 
-- [ ] Testes de integração da API com `TestClient` e banco SQLite em memória
+- [x] Testes de integração da API com `TestClient` e banco SQLite em memória
 - [ ] Endpoint de busca por nome (`GET /produtos/busca?q=`)
 - [ ] Filtros por grupo e família em `GET /produtos/`
 - [ ] Frontend mobile (PWA) com leitura de código de barras pela câmera
 - [ ] Agendamento automático do ETL (cron)
 - [ ] Endpoint para cancelar job em andamento
 - [ ] Notificação (WebSocket) ao completar sync
-- [ ] Logging detalhado por fase ETL
+- [x] Logging detalhado por fase ETL
 
 ---
 

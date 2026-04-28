@@ -5,7 +5,9 @@
 .vscode
 .pytest_cache
 *.log
+*.pem
 pytest_cache
 pytest.ini
 __pycache__
 scripts
+logs
