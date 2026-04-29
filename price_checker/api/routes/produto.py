@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from price_checker.api.deps import get_produto_repository, get_current_user, require_supervisor
 from price_checker.application.services.produto_service import ProdutoService
-from price_checker.schemas.produto_schema import ProdutoPublicResponse, ProdutoResponse
+from price_checker.schemas.produto_schema import ObservacaoNaoEncontrado, ProdutoPublicResponse, ProdutoResponse
 from price_checker.domain.value_objects.codigo import Codigo
 import logging
 
@@ -57,3 +57,15 @@ def obter_produto_completo(
 ):
     logger.info("Busca completa | codigo=%s", codigo)
     return _buscar(codigo, repo, ProdutoResponse)
+
+@router.post("/nao-encontrado")
+def registrar_nao_encontrado(
+    body: ObservacaoNaoEncontrado,
+    _user=Depends(get_current_user),
+):
+    logger.warning(
+        "Produto não encontrado | codigo=%s | observacao=%s",
+        body.codigo,
+        body.observacao,
+    )
+    return {"ok": True}

@@ -17,3 +17,7 @@ class ProdutoResponse(ProdutoPublicResponse):
     preco_custo: float
     markup: float
     margem: float
+
+class ObservacaoNaoEncontrado(BaseModel):
+    codigo: str
+    observacao: str
