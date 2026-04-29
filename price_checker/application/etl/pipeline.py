@@ -3,6 +3,7 @@ from price_checker.infrastructure.db.session import SqliteSession
 from price_checker.application.etl.extract.extractor import ProdutoExtractor
 from price_checker.application.etl.transform.transformer import transformar_produtos
 from price_checker.application.etl.load.loader import carregar_produtos, atualizar_cache
+from price_checker.core.error_handler import sanitizar_erro, logar_erro_interno
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,10 +42,10 @@ def run_etl() -> EtlResult:
             return EtlResult(produtos_count=produtos_count, codigos_count=codigos_count)
 
         except Exception as e:
-            logger.exception("Erro no ETL | Erro: %s", e)
+            logar_erro_interno("Erro no ETL", e)
 
             session.rollback()
-            atualizar_cache(session, status="erro", erro=str(e))
+            atualizar_cache(session, status="erro", erro=sanitizar_erro(e))
             session.commit()
 
-            raise RuntimeError(f"Erro ao carregar dados no SQLite: {e}")
+            raise RuntimeError("Erro ao carregar dados no SQLite")

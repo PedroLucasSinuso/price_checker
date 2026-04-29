@@ -17,6 +17,7 @@ from price_checker.domain.models.cache_status import CacheStatus
 from price_checker.domain.models.usuario import Usuario
 from price_checker.application.etl.pipeline import run_etl, EtlResult
 from price_checker.infrastructure.db.session import SqliteSession
+from price_checker.core.error_handler import sanitizar_erro, logar_erro_interno
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +47,10 @@ def _run_etl_background(job_id: int):
         )
 
     except Exception as e:
-        logger.exception("Sync job %s falhou | Erro: %s", job_id, e)
+        logar_erro_interno(f"Sync job {job_id} falhou", e)
         JOB_STORE[job_id]["status"] = "erro"
         JOB_STORE[job_id]["finished_at"] = datetime.now(timezone.utc)
-        JOB_STORE[job_id]["error_message"] = str(e)
+        JOB_STORE[job_id]["error_message"] = sanitizar_erro(e)
 
 
 @router.post("/sync", response_model=SyncTriggerResponse)
