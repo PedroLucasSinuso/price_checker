@@ -1,6 +1,7 @@
+from typing import List
 from price_checker.domain.models.usuario import Usuario
 from price_checker.infrastructure.repositories.usuario_repository import UsuarioRepository
-from price_checker.schemas.usuario_schema import UsuarioCreate
+from price_checker.schemas.usuario_schema import UsuarioCreate, UsuarioPatch
 from price_checker.application.utils.security import hash_password, verify_password
 from price_checker.application.utils.jwt_handler import create_access_token
 
@@ -11,21 +12,41 @@ class AuthService:
 
     def autenticar(self, username: str, password: str) -> str:
         usuario = self.repo.buscar_por_username(username)
-
         if not usuario or not verify_password(password, usuario.hashed_password):
             raise ValueError("Credenciais inválidas")
-
         return create_access_token({"sub": usuario.username, "role": usuario.role})
 
     def registrar(self, dados: UsuarioCreate) -> Usuario:
         if self.repo.buscar_por_username(dados.username):
             raise ValueError(f"Username '{dados.username}' já está em uso")
-
         usuario = Usuario(
             username=dados.username,
             nome_exibicao=dados.nome_exibicao,
             role=dados.role,
             hashed_password=hash_password(dados.password),
         )
-
         return self.repo.criar(usuario)
+
+    def listar(self) -> List[Usuario]:
+        return self.repo.listar()
+
+    def atualizar(self, id: int, dados: UsuarioPatch) -> Usuario:
+        usuario = self.repo.buscar_por_id(id)
+        if not usuario:
+            raise LookupError(f"Usuário {id} não encontrado")
+        if not dados.tem_alteracao():
+            raise ValueError("Nenhuma alteração fornecida")
+        if dados.password is not None:
+            usuario.hashed_password = hash_password(dados.password)
+        if dados.role is not None:
+            usuario.role = dados.role
+        self.repo._session.flush()
+        return usuario
+
+    def excluir(self, id: int, admin_id: int) -> None:
+        if id == admin_id:
+            raise PermissionError("Não é possível excluir o próprio usuário")
+        usuario = self.repo.buscar_por_id(id)
+        if not usuario:
+            raise LookupError(f"Usuário {id} não encontrado")
+        self.repo.excluir(usuario)

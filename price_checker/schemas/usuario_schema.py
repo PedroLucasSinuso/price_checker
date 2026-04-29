@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel
 
 
@@ -16,3 +16,10 @@ class UsuarioResponse(BaseModel):
     role: str
 
     model_config = {"from_attributes": True}
+
+class UsuarioPatch(BaseModel):
+    password: Optional[str] = None
+    role: Optional[Literal["operador", "supervisor", "admin"]] = None
+
+    def tem_alteracao(self) -> bool:
+        return self.password is not None or self.role is not None
