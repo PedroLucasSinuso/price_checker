@@ -40,16 +40,16 @@ def listar_usuarios(db=Depends(get_db), _admin: Usuario = Depends(require_admin)
     return AuthService(UsuarioRepository(db)).listar()
 
 
-@router.patch("/usuarios/{id}", response_model=UsuarioResponse)
+@router.patch("/usuarios/{usuario_id}", response_model=UsuarioResponse)
 def atualizar_usuario(
-    id: int,
+    usuario_id: int,
     dados: UsuarioPatch,
     db=Depends(get_db),
     _admin: Usuario = Depends(require_admin),
 ):
     service = AuthService(UsuarioRepository(db))
     try:
-        usuario = service.atualizar(id, dados)
+        usuario = service.atualizar(usuario_id, dados)
         db.commit()
         return usuario
     except LookupError as e:
@@ -58,15 +58,15 @@ def atualizar_usuario(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/usuarios/{id}", status_code=204)
+@router.delete("/usuarios/{usuario_id}", status_code=204)
 def excluir_usuario(
-    id: int,
+    usuario_id: int,
     db=Depends(get_db),
     admin: Usuario = Depends(require_admin),
 ):
     service = AuthService(UsuarioRepository(db))
     try:
-        service.excluir(id, admin.id)
+        service.excluir(usuario_id, admin.id)
         db.commit()
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))

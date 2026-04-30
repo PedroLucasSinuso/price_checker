@@ -11,8 +11,8 @@ class UsuarioRepository:
         stmt = select(Usuario).where(Usuario.username == username)
         return self._session.execute(stmt).scalars().first()
 
-    def buscar_por_id(self, id: int) -> Optional[Usuario]:
-        stmt = select(Usuario).where(Usuario.id == id)
+    def buscar_por_id(self, usuario_id: int) -> Optional[Usuario]:
+        stmt = select(Usuario).where(Usuario.id == usuario_id)
         return self._session.execute(stmt).scalars().first()
 
     def listar(self) -> List[Usuario]:
@@ -23,6 +23,9 @@ class UsuarioRepository:
         self._session.add(usuario)
         self._session.flush()
         return usuario
+
+    def atualizar(self, usuario: Usuario) -> None:
+        self._session.flush()
 
     def excluir(self, usuario: Usuario) -> None:
         self._session.delete(usuario)

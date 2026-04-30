@@ -11,3 +11,4 @@ pytest.ini
 __pycache__
 scripts
 logs
+data/price_checker.db

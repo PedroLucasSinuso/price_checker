@@ -30,23 +30,23 @@ class AuthService:
     def listar(self) -> List[Usuario]:
         return self.repo.listar()
 
-    def atualizar(self, id: int, dados: UsuarioPatch) -> Usuario:
-        usuario = self.repo.buscar_por_id(id)
+    def atualizar(self, usuario_id: int, dados: UsuarioPatch) -> Usuario:
+        usuario = self.repo.buscar_por_id(usuario_id)
         if not usuario:
-            raise LookupError(f"Usuário {id} não encontrado")
+            raise LookupError(f"Usuário {usuario_id} não encontrado")
         if not dados.tem_alteracao():
             raise ValueError("Nenhuma alteração fornecida")
         if dados.password is not None:
             usuario.hashed_password = hash_password(dados.password)
         if dados.role is not None:
             usuario.role = dados.role
-        self.repo._session.flush()
+        self.repo.atualizar(usuario)
         return usuario
 
-    def excluir(self, id: int, admin_id: int) -> None:
-        if id == admin_id:
+    def excluir(self, usuario_id: int, admin_id: int) -> None:
+        if usuario_id == admin_id:
             raise PermissionError("Não é possível excluir o próprio usuário")
-        usuario = self.repo.buscar_por_id(id)
+        usuario = self.repo.buscar_por_id(usuario_id)
         if not usuario:
-            raise LookupError(f"Usuário {id} não encontrado")
+            raise LookupError(f"Usuário {usuario_id} não encontrado")
         self.repo.excluir(usuario)
