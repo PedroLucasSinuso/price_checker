@@ -246,6 +246,7 @@ class TestAdminSync:
         assert response.status_code == 200
         data = response.json()
         assert "job_id" in data
+        assert isinstance(data["job_id"], str)
         assert data["status"] == "started"
 
     def test_trigger_sync_como_supervisor(self, client, token_supervisor):
@@ -267,6 +268,29 @@ class TestAdminSync:
         response = client.post("/admin/sync")
         assert response.status_code == 401
 
+    def test_obter_sync_status_apos_trigger(self, client, token_admin):
+        trigger = client.post(
+            "/admin/sync",
+            headers={"Authorization": f"Bearer {token_admin}"},
+        )
+        job_id = trigger.json()["job_id"]
+
+        response = client.get(
+            f"/admin/sync/{job_id}",
+            headers={"Authorization": f"Bearer {token_admin}"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["job_id"] == job_id
+        assert data["status"] in ("em_progresso", "sucesso", "erro")
+
+    def test_obter_sync_status_inexistente(self, client, token_admin):
+        response = client.get(
+            "/admin/sync/job-nao-existe",
+            headers={"Authorization": f"Bearer {token_admin}"},
+        )
+        assert response.status_code == 404
+
     def test_listar_sync_history(self, client, token_admin, db_session):
         from price_checker.domain.models.cache_status import CacheStatus
         from datetime import datetime, timezone
@@ -286,33 +310,7 @@ class TestAdminSync:
         data = response.json()
         assert "jobs" in data
         assert "total" in data
-
-    def test_obter_sync_status(self, client, token_admin, db_session):
-        from price_checker.domain.models.cache_status import CacheStatus
-        from datetime import datetime, timezone
-
-        cache = CacheStatus(
-            last_updated=datetime.now(timezone.utc),
-            status="sucesso"
-        )
-        db_session.add(cache)
-        db_session.commit()
-        db_session.refresh(cache)
-
-        response = client.get(
-            f"/admin/sync/{cache.id}",
-            headers={"Authorization": f"Bearer {token_admin}"},
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["job_id"] == cache.id
-
-    def test_obter_sync_status_inexistente(self, client, token_admin):
-        response = client.get(
-            "/admin/sync/99999",
-            headers={"Authorization": f"Bearer {token_admin}"},
-        )
-        assert response.status_code == 404
+        assert data["total"] >= 1
 
 
 class TestCors:
@@ -320,7 +318,7 @@ class TestCors:
         response = client.options(
             "/auth/token",
             headers={
-                "Origin": "http://localhost:3000",
+                "Origin": "http://localhost:5173",
                 "Access-Control-Request-Method": "POST",
             },
         )

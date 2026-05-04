@@ -1,6 +1,6 @@
+import uuid
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,7 +16,6 @@ from price_checker.schemas.sync_schema import (
 from price_checker.domain.models.cache_status import CacheStatus
 from price_checker.domain.models.usuario import Usuario
 from price_checker.application.etl.pipeline import run_etl, EtlResult
-from price_checker.infrastructure.db.session import SqliteSession
 from price_checker.core.error_handler import sanitizar_erro, logar_erro_interno
 
 logger = logging.getLogger(__name__)
@@ -25,10 +24,13 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 executor = ThreadPoolExecutor(max_workers=1)
 
-JOB_STORE: dict[int, dict] = {}
+JOB_STORE: dict[str, dict] = {}
 
 
-def _run_etl_background(job_id: int):
+def _run_etl_background(job_id: str):
+    from price_checker.infrastructure.db.bootstrap import init_db
+    init_db()
+
     JOB_STORE[job_id]["started_at"] = datetime.now(timezone.utc)
     JOB_STORE[job_id]["status"] = "em_progresso"
     logger.info("Sync job %s iniciado em background", job_id)
@@ -55,18 +57,9 @@ def _run_etl_background(job_id: int):
 
 @router.post("/sync", response_model=SyncTriggerResponse)
 def trigger_sync(
-    db: Session = Depends(get_db),
     _admin: Usuario = Depends(require_admin)
 ):
-    cache_status = CacheStatus(
-        last_updated=datetime.now(timezone.utc),
-        status="em_progresso"
-    )
-    db.add(cache_status)
-    db.commit()
-    db.refresh(cache_status)
-
-    job_id = cache_status.id
+    job_id = str(uuid.uuid4())[:8]
 
     JOB_STORE[job_id] = {
         "job_id": job_id,
@@ -91,26 +84,22 @@ def trigger_sync(
 
 @router.get("/sync/{job_id}", response_model=SyncStatusResponse)
 def get_sync_status(
-    job_id: int,
-    db: Session = Depends(get_db),
+    job_id: str,
     _admin: Usuario = Depends(require_admin)
 ):
-    stmt = select(CacheStatus).where(CacheStatus.id == job_id)
-    result = db.execute(stmt).scalars().first()
+    sync_data = JOB_STORE.get(job_id)
 
-    if not result:
+    if not sync_data:
         raise HTTPException(status_code=404, detail=f"Job {job_id} não encontrado")
 
-    sync_data = JOB_STORE.get(job_id, {})
-
     return SyncStatusResponse(
-        job_id=result.id,
-        started_at=result.last_updated,
+        job_id=sync_data["job_id"],
+        started_at=sync_data["started_at"],
         finished_at=sync_data.get("finished_at"),
-        status=sync_data.get("status", result.status),
+        status=sync_data["status"],
         produtos_count=sync_data.get("produtos_count"),
         codigos_count=sync_data.get("codigos_count"),
-        error_message=sync_data.get("error_message") or result.erro
+        error_message=sync_data.get("error_message"),
     )
 
 
@@ -129,15 +118,14 @@ def list_sync_history(
 
     jobs = []
     for r in results:
-        sync_data = JOB_STORE.get(r.id, {})
         jobs.append(SyncStatusResponse(
-            job_id=r.id,
+            job_id=str(r.id),
             started_at=r.last_updated,
-            finished_at=sync_data.get("finished_at"),
-            status=sync_data.get("status", r.status),
-            produtos_count=sync_data.get("produtos_count"),
-            codigos_count=sync_data.get("codigos_count"),
-            error_message=sync_data.get("error_message") or r.erro
+            finished_at=None,
+            status=r.status,
+            produtos_count=None,
+            codigos_count=None,
+            error_message=r.erro,
         ))
 
     return SyncListResponse(jobs=jobs, total=len(jobs))

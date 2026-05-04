@@ -1,10 +1,10 @@
 from datetime import datetime
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel
 
 
 class SyncStatusResponse(BaseModel):
-    job_id: int
+    job_id: str
     started_at: datetime
     finished_at: Optional[datetime] = None
     status: str
@@ -12,12 +12,11 @@ class SyncStatusResponse(BaseModel):
     codigos_count: Optional[int] = None
     error_message: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SyncTriggerResponse(BaseModel):
-    job_id: int
+    job_id: str
     status: str
     message: str
 

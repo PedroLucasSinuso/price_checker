@@ -40,14 +40,6 @@ class Settings(BaseSettings):
                 "Defina a variável no arquivo .env antes de subir a aplicação."
             )
         return self
-    @model_validator(mode="after")
-    def validar_cors(self):
-        if not self.allowed_origins and not self.allow_origin_regex:
-            print(
-                "Nenhuma configuração de CORS definida. "
-                "Requests cross-origin podem falhar."
-            )
-        return self
     
     model_config = {
         "env_file": ".env"
