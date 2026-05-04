@@ -10,9 +10,11 @@ class Settings(BaseSettings):
     postgres_url: str = ""
     sqlite_url: str = ""
     default_db: DatabaseType = DatabaseType.SQLITE
+
     cache_refresh_interval: int = 3600  # em segundos
     
     allowed_origins: list[str] = []
+    allow_origin_regex: str | None = None
 
     jwt_secret: str = ""
     access_token_expire_minutes: int = 60 # em minutos
@@ -36,6 +38,14 @@ class Settings(BaseSettings):
             raise ValueError(
                 "ALLOWED_ORIGINS não configurado."
                 "Defina a variável no arquivo .env antes de subir a aplicação."
+            )
+        return self
+    @model_validator(mode="after")
+    def validar_cors(self):
+        if not self.allowed_origins and not self.allow_origin_regex:
+            print(
+                "Nenhuma configuração de CORS definida. "
+                "Requests cross-origin podem falhar."
             )
         return self
     
