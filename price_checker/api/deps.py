@@ -4,6 +4,7 @@ from price_checker.infrastructure.db.session import SqliteSession
 from price_checker.infrastructure.repositories.produto_repository import ProdutoRepository
 from price_checker.infrastructure.repositories.usuario_repository import UsuarioRepository
 from price_checker.domain.models.usuario import Usuario
+from price_checker.domain.enums import RolesEnum
 from price_checker.application.utils.jwt_handler import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
@@ -37,13 +38,23 @@ def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)) ->
     return usuario
 
 
-def require_supervisor(usuario: Usuario = Depends(get_current_user)) -> Usuario:
-    if usuario.role not in ("supervisor", "admin"):
-        raise HTTPException(status_code=403, detail="Acesso restrito a supervisores")
+def require_role(usuario: Usuario, allowed_roles: list[RolesEnum], detail: str) -> Usuario:
+    if usuario.role not in [r.value for r in allowed_roles]:
+        raise HTTPException(status_code=403, detail=detail)
     return usuario
+
+
+def require_supervisor(usuario: Usuario = Depends(get_current_user)) -> Usuario:
+    return require_role(
+        usuario,
+        [RolesEnum.SUPERVISOR, RolesEnum.ADMIN],
+        "Acesso restrito a supervisores"
+    )
 
 
 def require_admin(usuario: Usuario = Depends(get_current_user)) -> Usuario:
-    if usuario.role != "admin":
-        raise HTTPException(status_code=403, detail="Acesso restrito a administradores")
-    return usuario
+    return require_role(
+        usuario,
+        [RolesEnum.ADMIN],
+        "Acesso restrito a administradores"
+    )

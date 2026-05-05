@@ -1,12 +1,13 @@
-from typing import Literal, Optional
+from typing import Optional
 from pydantic import BaseModel, field_validator
+from price_checker.domain.enums import RolesEnum
 
 
 class UsuarioCreate(BaseModel):
     username: str
     nome_exibicao: str
     password: str
-    role: Literal["operador", "supervisor", "admin"]
+    role: RolesEnum
 
 
 class UsuarioResponse(BaseModel):
@@ -20,7 +21,7 @@ class UsuarioResponse(BaseModel):
 
 class UsuarioPatch(BaseModel):
     password: Optional[str] = None
-    role: Optional[Literal["operador", "supervisor", "admin"]] = None
+    role: Optional[RolesEnum] = None
 
     @field_validator("password")
     @classmethod
