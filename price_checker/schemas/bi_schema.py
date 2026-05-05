@@ -1,0 +1,70 @@
+from pydantic import BaseModel
+from typing import Literal
+
+class KpisDTO(BaseModel):
+    faturamento_bruto: float
+    faturamento_liquido: float
+    total_trocas: float
+    total_perdas: float
+    total_consumo: float
+    qtd_tickets: int
+    ticket_medio: float
+    itens_por_ticket: float
+
+class ItemDimensaoDTO(BaseModel):
+    grupo: str
+    familia: str | None = None
+    produto: str | None = None
+    valor: float
+
+class ItemCurvaAbcDTO(BaseModel):
+    grupo: str
+    familia: str | None = None
+    produto: str | None = None
+    receita: float
+    participacao_pct: float
+    participacao_acumulada: float
+    curva: Literal["A", "B", "C"]
+
+class ItemRankingDTO(BaseModel):
+    codigo: str
+    produto: str
+    valor: float
+
+class ItemMovimentoDTO(BaseModel):
+    codigo: str
+    produto: str
+    receita: float
+
+class TrocasDTO(BaseModel):
+    total_trocas: float
+    taxa_troca_pct: float
+    por_produto: list[ItemMovimentoDTO]
+
+class MovimentoDTO(BaseModel):
+    total: float
+    por_produto: list[ItemMovimentoDTO]
+
+class PontoDiarioDTO(BaseModel):
+    data: str
+    valor: float
+
+class PontoHoraDTO(BaseModel):
+    hora: str
+    valor: float
+
+class PontoDiaSemanDTO(BaseModel):
+    dia_semana: str
+    valor: float
+
+class SkuDTO(BaseModel):
+    codigo: str
+    produto: str
+    grupo: str
+    familia: str
+    receita_total: float
+    qtd_total: float
+    qtd_tickets: int
+    ticket_medio: float
+    ranking_dias: list[PontoDiarioDTO]
+    distribuicao_hora: list[PontoHoraDTO]

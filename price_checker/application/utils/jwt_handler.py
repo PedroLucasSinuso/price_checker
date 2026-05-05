@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
+import jwt
+from jwt import InvalidTokenError
 from price_checker.core.config import settings
 
 ALGORITHM = "HS256"
@@ -15,5 +16,5 @@ def create_access_token(data: dict) -> str:
 def decode_access_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.jwt_secret, algorithms=[ALGORITHM])
-    except JWTError:
+    except InvalidTokenError:
         raise ValueError("Token inválido ou expirado")
