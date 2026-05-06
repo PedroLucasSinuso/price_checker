@@ -23,9 +23,12 @@ class Codigo:
 
     @staticmethod
     def normalizar(codigo: str) -> str:
-        """Remove espaços e traços, retornando o código limpo."""
+        """Remove espaços e traços, faz zero-padding e retorna o código limpo."""
         codigo = codigo.strip()
-        return re.sub(r"[\s-]", "", codigo)
+        codigo = re.sub(r"[\s-]", "", codigo)
+        if codigo.isdigit() and 1 <= len(codigo) <= 6:
+            codigo = codigo.zfill(6)
+        return codigo
 
     @classmethod
     def validar(cls, codigo: str) -> bool:
@@ -63,7 +66,7 @@ class Codigo:
     @staticmethod
     def is_plu6(codigo: str) -> bool:
         """Verifica se o código é um PLU de 6 dígitos válido."""
-        return codigo.isdigit() and len(codigo) == 6
+        return codigo.isdigit() and 1 <= len(codigo) <= 6
 
     @staticmethod
     def _validar_ean(codigo: str, tamanho: int) -> bool:

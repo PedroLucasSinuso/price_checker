@@ -63,3 +63,14 @@ def test_diferenca():
     c1 = Codigo(_PLU)
     c2 = Codigo("654321")
     assert c1 != c2
+
+@pytest.mark.parametrize("entrada, esperado", [
+    ("42", "000042"),
+    ("1", "000001"),
+    ("999", "000999"),
+    ("123456", "123456"),
+])
+def test_plu_zero_padding(entrada, esperado):
+    c = Codigo(entrada)
+    assert c.valor == esperado
+    assert c.tipo == "PLU6"
