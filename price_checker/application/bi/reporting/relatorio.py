@@ -1,8 +1,5 @@
-import pandas as pd
 from price_checker.application.bi.domain.vendas import Vendas
 from price_checker.application.bi.domain.trocas import Trocas
-from price_checker.application.bi.domain.perdas import Perdas
-from price_checker.application.bi.domain.consumo import Consumo
 from price_checker.application.bi.schema import COLUNAS, Dimensao, Metrica
 from price_checker.schemas.bi_schema import (
     KpisDTO,
@@ -11,34 +8,28 @@ from price_checker.schemas.bi_schema import (
     ItemRankingDTO,
     ItemMovimentoDTO,
     TrocasDTO,
-    MovimentoDTO,
 )
 
 
 class Relatorio:
+    """Gera relatórios de vendas e trocas com KPIs e análises por dimensão."""
     def __init__(
         self,
         vendas: Vendas,
         trocas: Trocas,
-        perdas: Perdas,
-        consumo: Consumo,
     ):
+        """Inicializa com os domínios de vendas e trocas."""
         self.vendas = vendas
         self.trocas = trocas
-        self.perdas = perdas
-        self.consumo = consumo
 
     def kpis(self) -> KpisDTO:
+        """Calcula os KPIs principais: faturamento, trocas, tickets e médias."""
         df_vendas = self.vendas.df
         df_trocas = self.trocas.df
-        df_perdas = self.perdas.df
-        df_consumo = self.consumo.df
 
         faturamento_bruto = df_vendas[COLUNAS.receita].sum()
         total_trocas = df_trocas[COLUNAS.receita].abs().sum()
-        total_perdas = df_perdas[COLUNAS.receita].abs().sum()
-        total_consumo = df_consumo[COLUNAS.receita].abs().sum()
-        faturamento_liquido = faturamento_bruto - total_trocas - total_perdas - total_consumo
+        faturamento_liquido = faturamento_bruto - total_trocas
 
         tickets = df_vendas.groupby(COLUNAS.id_documento)[COLUNAS.total_documento].first()
         qtd_tickets = len(tickets)
@@ -52,14 +43,13 @@ class Relatorio:
             faturamento_bruto=round(float(faturamento_bruto), 2),
             faturamento_liquido=round(float(faturamento_liquido), 2),
             total_trocas=round(float(total_trocas), 2),
-            total_perdas=round(float(total_perdas), 2),
-            total_consumo=round(float(total_consumo), 2),
             qtd_tickets=qtd_tickets,
             ticket_medio=round(ticket_medio, 2),
             itens_por_ticket=round(itens_por_ticket, 2),
         )
 
     def por_dimensao(self, dimensao: Dimensao, metrica: Metrica) -> list[ItemDimensaoDTO]:
+        """Retorna a receita ou quantidade agregada por dimensão (produto, grupo, família)."""
         colunas_grupo = dimensao.colunas()
         col_metrica = metrica.value
 
@@ -82,6 +72,7 @@ class Relatorio:
         ]
 
     def curva_abc(self, dimensao: Dimensao) -> list[ItemCurvaAbcDTO]:
+        """Gera a curva ABC baseada na receita, classificando produtos em A, B ou C."""
         colunas_grupo = dimensao.colunas()
 
         df_agrupado = (
@@ -113,6 +104,7 @@ class Relatorio:
         ]
 
     def ranking(self, metrica: Metrica, top: int = 10) -> list[ItemRankingDTO]:
+        """Retorna o ranking dos top produtos por métrica (receita ou quantidade)."""
         col_metrica = metrica.value
 
         df_ranking = (
@@ -134,6 +126,7 @@ class Relatorio:
         ]
 
     def trocas_resumo(self) -> TrocasDTO:
+        """Retorna o resumo de trocas com taxa de troca e breakdown por produto."""
         df_trocas = self.trocas.df
         df_vendas = self.vendas.df
 
@@ -153,56 +146,6 @@ class Relatorio:
         return TrocasDTO(
             total_trocas=round(total_trocas, 2),
             taxa_troca_pct=round(taxa_troca, 2),
-            por_produto=[
-                ItemMovimentoDTO(
-                    codigo=str(row[COLUNAS.codigo]),
-                    produto=str(row[COLUNAS.produto]),
-                    receita=round(float(row[COLUNAS.receita]), 2),
-                )
-                for row in df_por_produto.to_dict(orient="records")
-            ],
-        )
-
-    def perdas_resumo(self) -> MovimentoDTO:
-        df_perdas = self.perdas.df
-        total = float(df_perdas[COLUNAS.receita].abs().sum())
-
-        df_por_produto = (
-            df_perdas
-            .groupby([COLUNAS.codigo, COLUNAS.produto])[COLUNAS.receita]
-            .sum()
-            .abs()
-            .reset_index()
-            .sort_values(COLUNAS.receita, ascending=False)
-        )
-
-        return MovimentoDTO(
-            total=round(total, 2),
-            por_produto=[
-                ItemMovimentoDTO(
-                    codigo=str(row[COLUNAS.codigo]),
-                    produto=str(row[COLUNAS.produto]),
-                    receita=round(float(row[COLUNAS.receita]), 2),
-                )
-                for row in df_por_produto.to_dict(orient="records")
-            ],
-        )
-
-    def consumo_resumo(self) -> MovimentoDTO:
-        df_consumo = self.consumo.df
-        total = float(df_consumo[COLUNAS.receita].abs().sum())
-
-        df_por_produto = (
-            df_consumo
-            .groupby([COLUNAS.codigo, COLUNAS.produto])[COLUNAS.receita]
-            .sum()
-            .abs()
-            .reset_index()
-            .sort_values(COLUNAS.receita, ascending=False)
-        )
-
-        return MovimentoDTO(
-            total=round(total, 2),
             por_produto=[
                 ItemMovimentoDTO(
                     codigo=str(row[COLUNAS.codigo]),

@@ -4,6 +4,7 @@ from typing import Optional
 
 class Codigo:
     def __init__(self, valor: str) -> None:
+        """Inicializa o código validando o valor e detectando seu tipo (EAN, PLU)."""
         if not isinstance(valor, str):
             raise TypeError("Codigo deve ser uma string")
         normalizado = self.normalizar(valor)
@@ -22,15 +23,18 @@ class Codigo:
 
     @staticmethod
     def normalizar(codigo: str) -> str:
+        """Remove espaços e traços, retornando o código limpo."""
         codigo = codigo.strip()
         return re.sub(r"[\s-]", "", codigo)
 
     @classmethod
     def validar(cls, codigo: str) -> bool:
+        """Valida se o código é de algum tipo suportado (EAN ou PLU)."""
         return cls.detectar_tipo(codigo) is not None
 
     @classmethod
     def detectar_tipo(cls, codigo: str) -> Optional[str]:
+        """Identifica o tipo do código: EAN13, EAN12, EAN8 ou PLU6."""
         if cls.is_ean13(codigo):
             return "EAN13"
         if cls.is_ean12(codigo):
@@ -43,22 +47,27 @@ class Codigo:
 
     @classmethod
     def is_ean13(cls, codigo: str) -> bool:
+        """Verifica se o código é um EAN-13 válido."""
         return cls._validar_ean(codigo, 13)
 
     @classmethod
     def is_ean12(cls, codigo: str) -> bool:
+        """Verifica se o código é um EAN-12 válido."""
         return cls._validar_ean(codigo, 12)
 
     @classmethod
     def is_ean8(cls, codigo: str) -> bool:
+        """Verifica se o código é um EAN-8 válido."""
         return cls._validar_ean(codigo, 8)
 
     @staticmethod
     def is_plu6(codigo: str) -> bool:
+        """Verifica se o código é um PLU de 6 dígitos válido."""
         return codigo.isdigit() and len(codigo) == 6
 
     @staticmethod
     def _validar_ean(codigo: str, tamanho: int) -> bool:
+        """Valida um código EAN usando o algoritmo de dígito verificador."""
         if len(codigo) != tamanho or not codigo.isdigit():
             return False
         corpo = codigo[:-1]

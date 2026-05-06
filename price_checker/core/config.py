@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     default_db: DatabaseType = DatabaseType.SQLITE
 
     cache_refresh_interval: int = 3600  # em segundos
-    
+
     allowed_origins: list[str] = []
     allow_origin_regex: str | None = None
 
@@ -31,7 +31,7 @@ class Settings(BaseSettings):
                 "JWT_SECRET muito curto. Use no mínimo 32 caracteres."
             )
         return self
-    
+
     @model_validator(mode="after")
     def validar_allowed_origins(self):
         if not self.allowed_origins:
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
                 "Defina a variável no arquivo .env antes de subir a aplicação."
             )
         return self
-    
+
     model_config = {
         "env_file": ".env"
     }

@@ -5,8 +5,6 @@ class KpisDTO(BaseModel):
     faturamento_bruto: float
     faturamento_liquido: float
     total_trocas: float
-    total_perdas: float
-    total_consumo: float
     qtd_tickets: int
     ticket_medio: float
     itens_por_ticket: float

@@ -26,20 +26,3 @@ def carregar_fluxo(data_inicio: date, data_fim: date) -> pd.DataFrame:
                 "data_fim": data_fim.isoformat(),
             },
         )
-
-
-def carregar_fluxo_lancamento(
-    data_lancamento_inicio: date,
-    data_lancamento_fim: date,
-) -> pd.DataFrame:
-    _validar_periodo(data_lancamento_inicio, data_lancamento_fim)
-    sql = BiQueryLoader.load("lancamento")
-    with get_bi_engine().connect() as conn:
-        return pd.read_sql(
-            text(sql),
-            conn,
-            params={
-                "data_lancamento_inicio": data_lancamento_inicio.isoformat(),
-                "data_lancamento_fim": data_lancamento_fim.isoformat(),
-            },
-        )
